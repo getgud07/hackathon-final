@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Corridor — MUJ x GHS Civic Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#0A0B0D;
+  --surface:#141519;
+  --surface-2:#1B1D23;
+  --surface-3:#22252C;
+  --border:#2A2D35;
+  --border-strong:#383C46;
+  --text-hi:#F3F5F8;
+  --text-mid:#B7BCC7;
+  --text-lo:#767C8A;
+  --accent:#7C6CFF;
+  --accent-dim:#453D8C;
+  --accent-wash:rgba(124,108,255,0.12);
+  --green:#3FC989;
+  --green-wash:rgba(63,201,137,0.12);
+  --amber:#F0A93B;
+  --amber-wash:rgba(240,169,59,0.12);
+  --red:#F0555A;
+  --red-wash:rgba(240,85,90,0.12);
+  --cyan:#4FC1E9;
+  --cyan-wash:rgba(79,193,233,0.12);
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:22px;
+  --shadow-card:0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text-hi);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+#app{min-height:100vh;position:relative;}
+h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-0.01em;}
+p{margin:0;}
+button{font-family:var(--font-body);cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea,select{font-family:var(--font-body);color:var(--text-hi);}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--accent);color:#fff;}
+.mono{font-family:var(--font-mono);}
+
+/* scrollbar */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;}
+
+/* ---------- utility ---------- */
+.container{max-width:1280px;margin:0 auto;padding:0 24px;}
+.row{display:flex;align-items:center;}
+.col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;}
+.center{justify-content:center;align-items:center;}
+.gap-4{gap:4px;} .gap-6{gap:6px;} .gap-8{gap:8px;} .gap-10{gap:10px;} .gap-12{gap:12px;}
+.gap-16{gap:16px;} .gap-20{gap:20px;} .gap-24{gap:24px;} .gap-32{gap:32px;}
+.wrap{flex-wrap:wrap;}
+.muted{color:var(--text-mid);}
+.faint{color:var(--text-lo);}
+.small{font-size:12.5px;}
+.tiny{font-size:11px;}
+.bold{font-weight:600;}
+.flex1{flex:1;}
+.hidden{display:none !important;}
+.divider{height:1px;background:var(--border);width:100%;}
+.vdivider{width:1px;background:var(--border);align-self:stretch;}
+.clickable{cursor:pointer;}
+.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.scrollx::-webkit-scrollbar{display:none;}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 20px;border-radius:12px;font-weight:600;font-size:14.5px;
+  transition:transform .12s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#8b7cff;}
+.btn-secondary{background:var(--surface-3);color:var(--text-hi);border:1px solid var(--border-strong);}
+.btn-secondary:hover{border-color:var(--accent);}
+.btn-ghost{background:transparent;color:var(--text-mid);}
+.btn-ghost:hover{color:var(--text-hi);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-outline-danger{background:transparent;border:1px solid var(--red);color:var(--red);}
+.btn-lg{padding:16px 28px;font-size:16px;border-radius:14px;}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:9px;}
+.btn-block{width:100%;}
+.btn-icon{width:40px;height:40px;padding:0;border-radius:11px;background:var(--surface-3);border:1px solid var(--border);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* ---------- cards ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:18px;
+}
+.card-hover{transition:border-color .15s ease, transform .15s ease;}
+.card-hover:hover{border-color:var(--border-strong);transform:translateY(-1px);}
+.panel{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);}
+
+/* ---------- badges ---------- */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:100px;font-size:11.5px;font-weight:600;
+  letter-spacing:0.02em;text-transform:uppercase;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.badge-green{background:var(--green-wash);color:var(--green);}
+.badge-amber{background:var(--amber-wash);color:var(--amber);}
+.badge-red{background:var(--red-wash);color:var(--red);}
+.badge-cyan{background:var(--cyan-wash);color:var(--cyan);}
+.badge-accent{background:var(--accent-wash);color:#B3A9FF;}
+.badge-gray{background:var(--surface-3);color:var(--text-mid);}
+
+/* ---------- icons ---------- */
+.icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.icon svg{display:block;}
+.icon-box{width:42px;height:42px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);}
+
+/* ---------- priority ring (signature element) ---------- */
+.pring{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pring svg{transform:rotate(-90deg);}
+.pring-val{position:absolute;font-family:var(--font-mono);font-weight:600;text-align:center;line-height:1;}
+.pring-val small{display:block;font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-lo);}
+
+/* ---------- top nav ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(10,11,13,0.86);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:18px;}
+.brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(155deg,var(--accent),#4B3FCF);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ---------- bottom nav (student mobile) ---------- */
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(20,21,25,0.92);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;
+}
+.bottomnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:10px 4px 12px;color:var(--text-lo);font-size:10.5px;font-weight:600;letter-spacing:0.02em;
+}
+.bottomnav-item.active{color:var(--accent);}
+
+/* ---------- admin sidebar ---------- */
+.adminshell{display:flex;min-height:100vh;}
+.sidebar{
+  width:248px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;
+}
+.sidenav-item{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;
+  color:var(--text-mid);font-size:14px;font-weight:500;transition:background .12s;
+}
+.sidenav-item.active{background:var(--accent-wash);color:var(--text-hi);}
+.sidenav-item.active .icon{color:#B3A9FF;}
+.sidenav-item:hover{background:var(--surface-3);}
+.admin-main{flex:1;min-width:0;padding:28px 32px 60px;}
+
+/* ---------- forms ---------- */
+.field-label{font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:8px;display:block;}
+.input,.textarea{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;
+  padding:13px 14px;font-size:14.5px;color:var(--text-hi);transition:border-color .15s;
+}
+.input:focus,.textarea:focus{outline:none;border-color:var(--accent);}
+.textarea{resize:vertical;min-height:110px;line-height:1.5;}
+.input::placeholder,.textarea::placeholder{color:var(--text-lo);}
+
+/* ---------- status stepper ---------- */
+.stepper{display:flex;align-items:flex-start;}
+.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;}
+.step-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-3);border:2px solid var(--border-strong);z-index:2;flex-shrink:0;}
+.step-line{position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--border-strong);z-index:1;}
+.step:last-child .step-line{display:none;}
+.step.done .step-dot{background:var(--green);border-color:var(--green);}
+.step.done .step-line{background:var(--green);}
+.step.current .step-dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-wash);}
+.step-label{margin-top:9px;font-size:11px;font-weight:600;color:var(--text-lo);text-align:center;max-width:80px;}
+.step.done .step-label,.step.current .step-label{color:var(--text-hi);}
+
+/* ---------- progress dots (report flow) ---------- */
+.flow-dots{display:flex;gap:6px;}
+.flow-dot{height:4px;flex:1;border-radius:4px;background:var(--border-strong);transition:background .2s;}
+.flow-dot.active{background:var(--accent);}
+.flow-dot.done{background:var(--accent-dim);}
+
+/* ---------- category grid ---------- */
+.catgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.catcard{
+  padding:18px 14px;border-radius:14px;background:var(--surface-2);border:1.5px solid var(--border);
+  display:flex;flex-direction:column;gap:12px;transition:all .15s;text-align:left;
+}
+.catcard.selected{border-color:var(--accent);background:var(--accent-wash);}
+.catcard:hover{border-color:var(--border-strong);}
+
+/* ---------- toast ---------- */
+.toastwrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;pointer-events:none;}
+.toast{
+  pointer-events:auto;
+  background:var(--surface-3);border:1px solid var(--border-strong);border-radius:12px;
+  padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;
+  box-shadow:0 10px 30px rgba(0,0,0,0.45);
+  animation:toastin .25s ease;
+  max-width:92vw;
+}
+@keyframes toastin{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,6,8,0.7);backdrop-filter:blur(4px);z-index:150;display:flex;align-items:flex-end;justify-content:center;animation:fadein .18s ease;}
+@keyframes fadein{from{opacity:0;}to{opacity:1;}}
+.modal-sheet{
+  background:var(--surface);border:1px solid var(--border);border-top-left-radius:22px;border-top-right-radius:22px;
+  width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:22px;
+  animation:sheetup .22s cubic-bezier(.2,.8,.2,1);
+}
+@media(min-width:640px){
+  .modal-overlay{align-items:center;}
+  .modal-sheet{border-radius:20px;}
+}
+@keyframes sheetup{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* ---------- ai analysis ---------- */
+.ai-shell{
+  border-radius:22px;border:1px solid rgba(124,108,255,.34);
+  background:
+    radial-gradient(circle at 50% -10%,rgba(124,108,255,.20),transparent 42%),
+    linear-gradient(180deg,rgba(124,108,255,.09),rgba(124,108,255,.015) 54%,var(--surface) 100%);
+  padding:26px;position:relative;overflow:hidden;
+  box-shadow:0 22px 70px rgba(0,0,0,.28),0 0 0 1px rgba(124,108,255,.04) inset;
+}
+.ai-hero{position:relative;min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px 8px 8px;}
+.ai-orbit{width:122px;height:122px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:22px;background:radial-gradient(circle,rgba(124,108,255,.22),rgba(124,108,255,.04) 58%,transparent 60%);box-shadow:0 0 55px rgba(124,108,255,.14);}
+.ai-orbit:before,.ai-orbit:after{content:'';position:absolute;border:1px solid rgba(124,108,255,.32);border-radius:50%;}
+.ai-orbit:before{inset:8px;animation:orbit 5s linear infinite;}
+.ai-orbit:after{inset:-8px;border-color:rgba(71,214,255,.22);animation:orbit 7s linear infinite reverse;}
+.ai-core{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,var(--accent),#8f83ff);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 30px rgba(124,108,255,.45),0 10px 25px rgba(0,0,0,.25);}
+.ai-core .ai-pulse{width:8px;height:8px;background:#fff;}
+.ai-core .ai-pulse:after{border-color:#fff;}
+@keyframes orbit{to{transform:rotate(360deg);}}
+.ai-status{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border:1px solid var(--border-strong);background:rgba(255,255,255,.025);border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-lo);margin-bottom:12px;}
+.ai-hero-title{font-size:25px;line-height:1.15;letter-spacing:-.025em;margin:0 0 8px;}
+.ai-hero-sub{max-width:390px;color:var(--text-lo);font-size:13px;line-height:1.55;margin:0;}
+.ai-progress{height:5px;border-radius:999px;background:var(--border-strong);overflow:hidden;margin:20px 2px 0;}
+.ai-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:inherit;transition:width .45s ease;box-shadow:0 0 14px rgba(124,108,255,.45);}
+.ai-result-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.ai-result-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text-lo);}
+.ai-score-card{border:1px solid rgba(124,108,255,.22);background:rgba(124,108,255,.045);border-radius:16px;padding:16px;margin-bottom:14px;}
+.ai-score-card .statval{font-size:17px;}
+.ai-action-zone{padding:14px;border:1px solid var(--border);border-radius:16px;background:rgba(255,255,255,.018);}
+@media(max-width:480px){.ai-shell{padding:20px}.ai-hero{min-height:285px}.ai-hero-title{font-size:22px}.ai-orbit{width:108px;height:108px}.ai-core{width:52px;height:52px}}
+.ai-pulse{width:10px;height:10px;border-radius:50%;background:var(--cyan);position:relative;flex-shrink:0;}
+.ai-pulse::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--cyan);animation:pulse 1.6s ease-out infinite;}
+@keyframes pulse{0%{transform:scale(0.5);opacity:1;}100%{transform:scale(1.8);opacity:0;}}
+.scanline{
+  position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:scan 1.8s ease-in-out infinite;
+}
+@keyframes scan{0%{top:0;opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{top:100%;opacity:0;}}
+.think-line{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;color:var(--text-lo);opacity:0;animation:fadein .3s ease forwards;}
+.think-line.done{color:var(--text-mid);}
+.think-check{width:16px;height:16px;border-radius:50%;background:var(--green-wash);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ---------- map ---------- */
+.mapwrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#101216;}
+.map-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;transition:transform .15s;}
+.map-pin:hover{transform:translate(-50%,-100%) scale(1.12);}
+.map-pin-head{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+.map-pin-head svg,.map-pin-head span{transform:rotate(-45deg);}
+.map-zone-label{position:absolute;font-size:10.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-lo);}
+
+/* ---------- before/after ---------- */
+.ba-wrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.ba-slider{position:absolute;top:0;bottom:0;background:#fff;width:3px;cursor:ew-resize;left:50%;box-shadow:0 0 0 1px rgba(0,0,0,0.3);z-index:5;}
+.ba-slider-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
+.ba-tag{position:absolute;top:12px;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;background:rgba(10,11,13,0.7);backdrop-filter:blur(6px);}
+
+/* ---------- stats ---------- */
+.statcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
+.statval{font-family:var(--font-display);font-size:26px;font-weight:700;}
+
+/* ---------- table ---------- */
+.datatable{width:100%;border-collapse:collapse;font-size:13.5px;}
+.datatable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-lo);padding:0 14px 10px;font-weight:600;}
+.datatable td{padding:14px;border-top:1px solid var(--border);vertical-align:middle;}
+.datatable tr.rowhover:hover{background:var(--surface-2);cursor:pointer;}
+
+/* ---------- filter chip ---------- */
+.chip{padding:8px 14px;border-radius:100px;background:var(--surface-2);border:1px solid var(--border);font-size:13px;font-weight:500;color:var(--text-mid);white-space:nowrap;transition:all .12s;}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.chip:hover:not(.active){border-color:var(--border-strong);color:var(--text-hi);}
+
+/* ---------- misc ---------- */
+.avatar{border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--text-mid);flex-shrink:0;}
+.image-tile{border-radius:14px;overflow:hidden;background:var(--surface-2);position:relative;display:flex;align-items:center;justify-content:center;}
+.skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface-3) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:10px;}
+@keyframes shimmer{0%{background-position:100% 0;}100%{background-position:-100% 0;}}
+.fade-in{animation:fadein .3s ease;}
+.slide-up{animation:slideup .35s cubic-bezier(.2,.8,.2,1);}
+@keyframes slideup{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:880px){
+  .adminshell{flex-direction:column;}
+  .sidebar{display:none;}
+  .admin-main{padding:20px 16px 90px;}
+  .catgrid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:560px){
+  .container{padding:0 16px;}
+}
+input[type=file]{display:none;}
+
+/* ---------- REPORT FLOW REFINEMENT ---------- */
+.report-shell{padding-top:18px;max-width:600px;padding-bottom:184px;}
+.report-top{position:sticky;top:58px;z-index:40;background:linear-gradient(180deg,var(--bg) 84%,rgba(10,11,13,0));padding:8px 0 16px;margin-bottom:4px;backdrop-filter:blur(8px);}
+.report-progress{display:flex;align-items:center;gap:12px;}
+.report-back-btn{height:38px;padding:0 12px;gap:7px;flex-shrink:0;font-size:12px;font-weight:700;}
+
+.report-progress-copy{min-width:72px;}
+.report-stepno{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--text-lo);text-transform:uppercase;}
+.report-stepname{font-family:var(--font-display);font-size:13px;font-weight:700;margin-top:2px;}
+.report-progressbar{display:flex;gap:5px;flex:1;}
+.report-progressbar .flow-dot{height:5px;}
+.report-heading{font-size:28px;line-height:1.08;margin:6px 0 8px;letter-spacing:-.025em;}
+.report-subtitle{font-size:13px;line-height:1.5;color:var(--text-mid);max-width:520px;margin-bottom:18px;}
+.report-content{animation:report-enter .22s ease;}
+@keyframes report-enter{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}
+.report-cta{position:fixed;left:0;right:0;bottom:74px;z-index:45;padding:12px max(16px,calc((100vw - 600px)/2 + 16px)) 14px;background:linear-gradient(180deg,rgba(10,11,13,0),rgba(10,11,13,.98) 35%);pointer-events:none;}
+.report-cta .btn{pointer-events:auto;box-shadow:0 8px 28px rgba(0,0,0,.38);}
+.report-choice{transition:border-color .15s,background .15s,transform .12s;min-height:48px;}
+.report-choice:active{transform:scale(.99);}
+.report-selected-note{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid rgba(124,108,255,.28);background:var(--accent-wash);border-radius:10px;color:#C8C2FF;font-size:12px;margin:0 0 14px;}
+.report-location-list{max-height:180px!important;}
+.report-map-card{padding:10px!important;margin-bottom:12px!important;}
+.report-map-card .mapwrap{border-radius:12px;}
+.report-category-grid{gap:10px!important;margin-bottom:0!important;}
+.report-category-grid .catcard{padding:14px 12px;gap:9px;min-height:108px;}
+.report-category-grid .icon-box{width:38px;height:38px;border-radius:10px;}
+.report-details-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.report-details-card .textarea{background:var(--surface);min-height:126px;border-color:var(--border-strong);}
+.report-upload{min-height:100px!important;padding:20px!important;border-color:var(--border-strong)!important;}
+.report-review-card{box-shadow:var(--shadow-card);}
+@media(max-width:560px){
+  .report-shell{padding-top:10px;padding-bottom:176px;}
+  .report-top{top:56px;padding-top:6px;}
+  .report-heading{font-size:25px;}
+  .report-category-grid .catcard{min-height:100px;}
+  .report-cta{bottom:72px;padding-bottom:12px;}
+  .report-back-btn{padding:0 10px;}
+}
+
+
+/* ---------- REAL CAMPUS MAP ---------- */
+.real-map-shell{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border-strong);background:#0d1117;box-shadow:0 18px 42px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);}
+.real-map{width:100%;height:100%;min-height:420px;background:#0d1117;}
+.real-map .leaflet-container{background:#0d1117;font-family:var(--font-body);}
+.real-map .leaflet-control-zoom{border:1px solid #343945!important;border-radius:10px!important;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.4)!important;}
+.real-map .leaflet-control-zoom a{width:34px!important;height:34px!important;line-height:34px!important;background:#151922!important;color:#f3f5f8!important;border-bottom:1px solid #343945!important;}
+.real-map .leaflet-control-zoom a:hover{background:#222735!important;}
+.real-map .leaflet-control-attribution{font-size:9px;background:rgba(10,11,13,.78)!important;color:#8d94a3!important;padding:2px 6px!important;}
+.real-map .leaflet-control-attribution a{color:#bdb7ff!important;}
+.real-map .leaflet-popup-content-wrapper,.real-map .leaflet-popup-tip{background:#141519;color:#f3f5f8;border:1px solid #343945;box-shadow:0 12px 30px rgba(0,0,0,.45);}
+.real-map .leaflet-popup-content{margin:12px 14px;font-family:var(--font-body);font-size:12px;}
+.real-map .leaflet-popup-content strong{font-family:var(--font-display);font-size:13px;}
+.real-map .leaflet-popup-content .severity{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;}
+.real-map .leaflet-popup-content .sev-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.real-map .map-problem-tooltip{
+  background:#141519;
+  color:#f3f5f8;
+  border:1px solid #343945;
+  border-radius:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+  padding:0;
+  max-width:250px;
+}
+.real-map .map-problem-tooltip:before{border-top-color:#343945;}
+.real-map .map-problem-tooltip .leaflet-tooltip-content{margin:0;}
+.map-problem-preview{padding:10px 12px;min-width:170px;}
+.map-problem-preview strong{display:block;font-family:var(--font-display);font-size:12px;line-height:1.3;margin-bottom:4px;}
+.map-problem-meta{color:#b7bcc7;font-size:10px;line-height:1.35;margin-bottom:5px;}
+.map-problem-hint{margin-top:7px;color:#8d7dff;font-family:var(--font-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+
+.campus-label{background:rgba(10,11,13,.9);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 9px;border-radius:8px;font-family:var(--font-display);font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+.map-legend{position:absolute;left:16px;bottom:16px;z-index:900;background:rgba(10,11,13,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:11px 12px;color:#fff;box-shadow:0 10px 28px rgba(0,0,0,.4);}
+.map-legend-title{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#b7bcc7;font-weight:700;margin-bottom:7px;}
+.map-gradient{width:180px;height:8px;border-radius:99px;background:linear-gradient(90deg,#20c878 0%,#d7dc35 38%,#f0a93b 68%,#f0555a 100%);}
+.map-legend-labels{display:flex;justify-content:space-between;font:9px var(--font-mono);color:#b7bcc7;margin-top:5px;}
+.map-live-pill{position:absolute;right:16px;top:16px;z-index:900;display:flex;align-items:center;gap:7px;background:rgba(10,11,13,.88);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:8px 11px;font-size:10px;font-weight:700;color:#f3f5f8;backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(0,0,0,.35);}
+.map-live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(63,201,137,.14);animation:pulse 1.7s ease-out infinite;}
+.map-location-badge{position:absolute;left:16px;top:16px;z-index:900;background:rgba(20,21,25,.86);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:7px 10px;color:#cfd3dc;font-size:10px;font-family:var(--font-mono);backdrop-filter:blur(10px);}
+@media(max-width:700px){.real-map{min-height:360px}.map-legend{left:10px;bottom:10px}.map-live-pill{right:10px;top:10px}.map-location-badge{left:10px;top:10px}.map-gradient{width:150px}}
+@media(max-width:700px){.real-map{min-height:300px}.map-legend{left:10px;bottom:10px}.map-live-pill{right:10px;top:10px}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toastwrap" id="toastwrap"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* =========================================================
+   CORRIDOR — MUJ x GHS Civic Platform
+   Prototype application logic (vanilla JS, single bundle)
+   ========================================================= */
+
+/* ---------------- ICONS ---------------- */
+const ICONS = {
+  road:`<path d="M9 3 5 21M15 3l4 18M12 3v3M12 9.5v3M12 16v3" stroke-linecap="round"/>`,
+  trash:`<path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  drop:`<path d="M12 3s7 7.5 7 12.2A7 7 0 0 1 5 15.2C5 10.5 12 3 12 3z" stroke-linejoin="round"/>`,
+  bolt:`<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke-linejoin="round"/>`,
+  access:`<circle cx="12" cy="4.5" r="1.7"/><path d="M12 8v5m0 0-4 7m4-7 3 3 3.5 1M8 20l2-6m-6 0h8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  leaf:`<path d="M20 4c-9 0-16 6-16 15 9 0 16-6 16-15z" stroke-linejoin="round"/><path d="M5 19c3-4 7-8 14-14" stroke-linecap="round"/>`,
+  shield:`<path d="M12 3 4 6v6c0 5 3.5 7.8 8 9 4.5-1.2 8-4 8-9V6l-8-3z" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  dots:`<circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/>`,
+  camera:`<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4"/>`,
+  pin:`<path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.4"/>`,
+  crosshair:`<circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/>`,
+  check:`<path d="M4 12.5 9.5 18 20 6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  chevronRight:`<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>`,
+  chevronDown:`<path d="M5 9l7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/>`,
+  chevronLeft:`<path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>`,
+  arrowLeft:`<path d="M19 12H5M11 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  arrowRight:`<path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>`,
+  home:`<path d="M4 11 12 4l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  compass:`<circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-4 2 2-6 4-2z" stroke-linejoin="round"/>`,
+  hands:`<path d="M8 12V6a1.6 1.6 0 0 1 3.2 0v5M11.2 11V4.6a1.6 1.6 0 0 1 3.2 0V11M14.4 11.4V6.4a1.6 1.6 0 0 1 3.2 0v8.6c0 3.3-2 6-6.2 6-3.4 0-5-1.3-6.6-3.6L2.6 14a1.5 1.5 0 0 1 2.4-1.8L8 15" stroke-linecap="round" stroke-linejoin="round"/>`,
+  activity:`<path d="M3 12h4l2.5 7L14 5l2.5 7H21" stroke-linecap="round" stroke-linejoin="round"/>`,
+  plus:`<path d="M12 5v14M5 12h14" stroke-linecap="round"/>`,
+  close:`<path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/>`,
+  upload:`<path d="M12 16V4M7 9l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" stroke-linecap="round" stroke-linejoin="round"/>`,
+  mic:`<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke-linecap="round"/>`,
+  sparkle:`<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" stroke-linejoin="round"/>`,
+  layers:`<path d="M12 3 3 8l9 5 9-5-9-5z" stroke-linejoin="round"/><path d="M3 13l9 5 9-5M3 10.5l9 5 9-5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  users:`<circle cx="9" cy="8" r="3.2"/><path d="M2.8 19a6.2 6.2 0 0 1 12.4 0" stroke-linecap="round"/><path d="M15.5 5.2A3.2 3.2 0 0 1 18 11.2M17 14.5a6.2 6.2 0 0 1 4.2 4.5" stroke-linecap="round"/>`,
+  clock:`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  flag:`<path d="M5 21V4M5 4h13l-3 4 3 4H5" stroke-linejoin="round" stroke-linecap="round"/>`,
+  grid:`<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>`,
+  map:`<path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z" stroke-linejoin="round"/><path d="M9 4v13M15 6.5v13" stroke-linecap="round"/>`,
+  bar:`<path d="M5 21V10M12 21V4M19 21v-7" stroke-linecap="round"/>`,
+  history:`<path d="M4 4v6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 13a8 8 0 1 0 2.3-6.4L4 10" stroke-linecap="round" stroke-linejoin="round"/>`,
+  filter:`<path d="M4 5h16l-6 8v6l-4-2v-4L4 5z" stroke-linejoin="round"/>`,
+  logout:`<path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/>`,
+  building:`<path d="M4 21V6l8-3 8 3v15" stroke-linejoin="round"/><path d="M9 21v-5h6v5M9 10h.01M15 10h.01M9 14h.01M15 14h.01" stroke-linecap="round"/>`,
+  warn:`<path d="M12 3 2 20h20L12 3z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/>`,
+  image:`<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L4 19" stroke-linecap="round" stroke-linejoin="round"/>`,
+  trophy:`<path d="M8 4h8v6a4 4 0 0 1-8 0V4z" stroke-linejoin="round"/><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M10 18h4M12 14v4M8 21h8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  eye:`<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/>`,
+  refresh:`<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" stroke-linecap="round"/><path d="M18 3v4h-4M6 21v-4h4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  copy:`<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" stroke-linecap="round" stroke-linejoin="round"/>`,
+  send:`<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linejoin="round" stroke-linecap="round"/>`,
+};
+function icon(name, size=18, stroke='currentColor', sw=1.9){
+  const body = ICONS[name] || ICONS.dots;
+  return `<span class="icon" style="width:${size}px;height:${size}px"><svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${stroke}" stroke-width="${sw}">${body}</svg></span>`;
+}
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+/* ---------------- DATA MODEL ---------------- */
+const CATEGORIES = [
+  {id:'roads', label:'Roads & Infrastructure', icon:'road'},
+  {id:'waste', label:'Waste & Cleanliness', icon:'trash'},
+  {id:'water', label:'Water & Drainage', icon:'drop'},
+  {id:'electricity', label:'Electricity & Lighting', icon:'bolt'},
+  {id:'accessibility', label:'Accessibility', icon:'access'},
+  {id:'environment', label:'Environment & Greenery', icon:'leaf'},
+  {id:'safety', label:'Safety', icon:'shield'},
+  {id:'other', label:'Other', icon:'dots'},
+];
+function catInfo(id){ return CATEGORIES.find(c=>c.id===id) || CATEGORIES[CATEGORIES.length-1]; }
+
+/* Map locations — labels retained for the reporting flow; real coordinates are in REAL_MAP_COORDS. */
+const LOCATIONS = [
+  {id:'muj-gate', label:'MUJ Front Gate', zone:'MUJ', x:14, y:28},
+  {id:'muj-block5', label:'Block 5, MUJ', zone:'MUJ', x:24, y:16},
+  {id:'muj-sports', label:'MUJ Sports Ground', zone:'MUJ', x:12, y:44},
+  {id:'muj-hostel', label:'MUJ Hostel Zone', zone:'MUJ', x:27, y:38},
+  {id:'corridor-mid', label:'Corridor Midpoint', zone:'CORRIDOR', x:48, y:52},
+  {id:'corridor-dhaba', label:'Corridor — Near Dhaba Row', zone:'CORRIDOR', x:60, y:61},
+  {id:'corridor-turn', label:'Corridor — Sharp Turn', zone:'CORRIDOR', x:36, y:46},
+  {id:'ghs-gate', label:'GHS Gate', zone:'GHS', x:78, y:74},
+  {id:'ghs-main', label:'GHS Main Building', zone:'GHS', x:87, y:82},
+  {id:'ghs-parking', label:'GHS Parking', zone:'GHS', x:82, y:66},
+];
+function locById(id){ return LOCATIONS.find(l=>l.id===id); }
+
+const CLUBS = ['Environmental Club','Student Volunteers Cell','Civil Engineering Society','Road Safety Collective','Green Campus Initiative'];
+
+const SEVERITY_ORDER = ['LOW','MEDIUM','HIGH','CRITICAL'];
+
+function uid(prefix){ return prefix+'-'+Math.random().toString(36).slice(2,7).toUpperCase(); }
+
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); return d; }
+function fmtDate(d){ return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtDateShort(d){ return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
+
+/* Deterministic, explainable priority scoring
+   priorityScore = weighted(severity, urgency, safetyImpact, exposure) + unresolvedBonus */
+function computePriority({severity, urgency, safetyImpact, exposure, unresolvedDays}){
+  const base = (severity*0.32) + (urgency*0.22) + (safetyImpact*0.28) + (exposure*0.18);
+  const timeBonus = Math.min(12, Math.round(unresolvedDays*0.6));
+  return Math.max(0, Math.min(100, Math.round(base + timeBonus)));
+}
+function severityLabel(score){
+  if(score>=85) return 'CRITICAL';
+  if(score>=65) return 'HIGH';
+  if(score>=40) return 'MEDIUM';
+  return 'LOW';
+}
+function severityColor(label){
+  return {CRITICAL:'red',HIGH:'red',MEDIUM:'amber',LOW:'green'}[label] || 'amber';
+}
+function priorityColorVar(score){
+  if(score>=85) return 'var(--red)';
+  if(score>=65) return 'var(--red)';
+  if(score>=40) return 'var(--amber)';
+  return 'var(--green)';
+}
+
+const STATUS_FLOW = ['REPORTED','VERIFIED','ASSIGNED','IN_PROGRESS','RESOLVED','CONFIRMED'];
+const STATUS_LABELS = {
+  REPORTED:'Reported', VERIFIED:'Verified', ASSIGNED:'Assigned',
+  IN_PROGRESS:'In progress', RESOLVED:'Resolved', CONFIRMED:'Confirmed'
+};
+function isActive(p){ return p.status!=='RESOLVED' && p.status!=='CONFIRMED'; }
+
+/* ---------------- CATEGORY ILLUSTRATION (stand-in for photos) ---------------- */
+function categoryArt(category, variant){
+  const c = catInfo(category);
+  const palette = {
+    roads:['#3A3D46','#5A5E6A'], waste:['#3E3B2E','#8A7A3D'], water:['#1E3542','#3F7A94'],
+    electricity:['#3E361E','#B4903A'], accessibility:['#2E2E3E','#6E6EA6'], environment:['#1E3324','#3F8A5C'],
+    safety:['#3E1E1E','#A34A4A'], other:['#2A2A32','#5A5A66']
+  };
+  const [bg,fg] = palette[category] || palette.other;
+  const damaged = variant==='before';
+  return `<svg viewBox="0 0 400 240" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+    <rect width="400" height="240" fill="${bg}"/>
+    <g opacity="0.5">
+      ${Array.from({length:6}).map((_,i)=>`<line x1="${i*70-40}" y1="240" x2="${i*70+120}" y2="0" stroke="${fg}" stroke-width="1" opacity="0.15"/>`).join('')}
+    </g>
+    <circle cx="200" cy="112" r="52" fill="none" stroke="${fg}" stroke-width="2" opacity="${damaged?0.9:0.55}"/>
+    <g transform="translate(174,86)" stroke="${fg}" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+      <svg width="52" height="52" viewBox="0 0 24 24">${ICONS[c.icon]}</svg>
+    </g>
+    ${damaged? `<g stroke="#E8564F" stroke-width="2" opacity="0.85"><line x1="60" y1="200" x2="130" y2="170"/><line x1="270" y1="205" x2="330" y2="165"/></g>` : `<g stroke="#3FC989" stroke-width="2.4" opacity="0.9" stroke-linecap="round"><path d="M55 190 l14 14 26-26" fill="none"/><path d="M300 185 l14 14 26-26" fill="none"/></g>`}
+  </svg>`;
+}
+
+/* ---------------- SEED DATA ---------------- */
+let PROBLEMS = [];
+let TOAST_ID = 0;
+
+function seedData(){
+  PROBLEMS = [
+    {
+      id:'P-042', title:'Deep pothole cluster near GHS Gate', category:'roads',
+      description:'Multiple large potholes have formed on the approach to GHS Gate, right on the vehicle turning radius. Two-wheelers are swerving into oncoming traffic to avoid them.',
+      locationId:'ghs-gate', image:categoryArt('roads','before'),
+      severity:88, urgency:82, safetyImpact:92, exposure:80,
+      communitySuitability:'HYBRID', duplicateProbability:0,
+      reportCount:14, contributorTarget:12, contributorCount:8,
+      status:'IN_PROGRESS', createdAt:daysAgo(9), updatedAt:daysAgo(1),
+      reportedBy:'Ananya R.', assignedTo:'Estate Maintenance Wing',
+      contributors:[{name:'Environmental Club',count:6,type:'club'},{name:'Student Volunteers Cell',count:2,type:'club'}],
+      history:[
+        {status:'REPORTED',changedBy:'Ananya R.',timestamp:daysAgo(9),note:'Initial report with 3 photos.'},
+        {status:'VERIFIED',changedBy:'Admin — Estate Office',timestamp:daysAgo(7),note:'Site visit confirmed extent of damage.'},
+        {status:'ASSIGNED',changedBy:'Admin — Estate Office',timestamp:daysAgo(6),note:'Assigned to Estate Maintenance Wing.'},
+        {status:'IN_PROGRESS',changedBy:'Estate Maintenance Wing',timestamp:daysAgo(1),note:'Material procured, patchwork begins Monday.'},
+      ],
+    },
+    {
+      id:'P-051', title:'Waterlogging near GHS after rain', category:'water',
+      description:'Stormwater collects in a large pool right outside the GHS side entrance whenever it rains, blocking pedestrian access for hours.',
+      locationId:'ghs-parking', image:categoryArt('water','before'),
+      severity:80, urgency:75, safetyImpact:60, exposure:78,
+      communitySuitability:'COMMUNITY', duplicateProbability:0,
+      reportCount:12, contributorTarget:15, contributorCount:11,
+      status:'REPORTED', createdAt:daysAgo(3), updatedAt:daysAgo(1),
+      reportedBy:'Rohit K.', assignedTo:null,
+      contributors:[{name:'Green Campus Initiative',count:7,type:'club'},{name:'Student Volunteers Cell',count:4,type:'club'}],
+      history:[{status:'REPORTED',changedBy:'Rohit K.',timestamp:daysAgo(3),note:'Reported after Tuesday evening rain.'}],
+    },
+    {
+      id:'P-037', title:'Garbage accumulation near Block 5', category:'waste',
+      description:'Waste bins near Block 5 overflow by Thursday every week and are not cleared until the weekend.',
+      locationId:'muj-block5', image:categoryArt('waste','before'),
+      severity:55, urgency:50, safetyImpact:35, exposure:60,
+      communitySuitability:'COMMUNITY', duplicateProbability:0,
+      reportCount:6, contributorTarget:8, contributorCount:4,
+      status:'REPORTED', createdAt:daysAgo(4), updatedAt:daysAgo(4),
+      reportedBy:'Priya S.', assignedTo:null,
+      contributors:[{name:'Green Campus Initiative',count:4,type:'club'}],
+      history:[{status:'REPORTED',changedBy:'Priya S.',timestamp:daysAgo(4),note:'Bins overflowing, smell reported.'}],
+    },
+    {
+      id:'P-029', title:'Broken streetlights on connecting corridor', category:'electricity',
+      description:'A 200m stretch of the corridor near the sharp turn has no working streetlights, making evening walks and rides unsafe.',
+      locationId:'corridor-turn', image:categoryArt('electricity','before'),
+      severity:72, urgency:70, safetyImpact:82, exposure:65,
+      communitySuitability:'ADMIN', duplicateProbability:0,
+      reportCount:9, contributorTarget:6, contributorCount:2,
+      status:'ASSIGNED', createdAt:daysAgo(11), updatedAt:daysAgo(2),
+      reportedBy:'Karan M.', assignedTo:'Electrical Maintenance Team',
+      contributors:[{name:'Road Safety Collective',count:2,type:'club'}],
+      history:[
+        {status:'REPORTED',changedBy:'Karan M.',timestamp:daysAgo(11),note:'6 poles reported dark.'},
+        {status:'VERIFIED',changedBy:'Admin — Facilities',timestamp:daysAgo(6),note:'Confirmed during night patrol.'},
+        {status:'ASSIGNED',changedBy:'Admin — Facilities',timestamp:daysAgo(2),note:'Assigned to Electrical Maintenance Team.'},
+      ],
+    },
+    {
+      id:'P-018', title:'Blocked drainage outside MUJ Hostel Zone', category:'water',
+      description:'A drainage grate is clogged with debris, causing slow water backup along the hostel access road.',
+      locationId:'muj-hostel', image:categoryArt('water','before'),
+      severity:50, urgency:48, safetyImpact:38, exposure:40,
+      communitySuitability:'COMMUNITY', duplicateProbability:0,
+      reportCount:5, contributorTarget:6, contributorCount:3,
+      status:'REPORTED', createdAt:daysAgo(6), updatedAt:daysAgo(6),
+      reportedBy:'Sana T.', assignedTo:null,
+      contributors:[{name:'Civil Engineering Society',count:3,type:'club'}],
+      history:[{status:'REPORTED',changedBy:'Sana T.',timestamp:daysAgo(6),note:'Water pooling after minor rain.'}],
+    },
+    {
+      id:'P-011', title:'No ramp access at GHS side entrance', category:'accessibility',
+      description:'The side entrance used by most students has a 3-step ledge with no ramp, making it inaccessible for wheelchair users.',
+      locationId:'ghs-main', image:categoryArt('accessibility','before'),
+      severity:62, urgency:45, safetyImpact:40, exposure:30,
+      communitySuitability:'ADMIN', duplicateProbability:0,
+      reportCount:4, contributorTarget:5, contributorCount:1,
+      status:'REPORTED', createdAt:daysAgo(14), updatedAt:daysAgo(14),
+      reportedBy:'Devika N.', assignedTo:null,
+      contributors:[{name:'Student Volunteers Cell',count:1,type:'club'}],
+      history:[{status:'REPORTED',changedBy:'Devika N.',timestamp:daysAgo(14),note:'Flagged by accessibility audit walk.'}],
+    },
+    {
+      id:'P-006', title:'Unlit stretch near corridor dhaba row', category:'safety',
+      description:'Complete darkness along the dhaba row after 8pm with no visibility for pedestrians crossing to reach the corridor.',
+      locationId:'corridor-dhaba', image:categoryArt('safety','before'),
+      severity:78, urgency:76, safetyImpact:85, exposure:70,
+      communitySuitability:'HYBRID', duplicateProbability:0,
+      reportCount:10, contributorTarget:10, contributorCount:9,
+      status:'IN_PROGRESS', createdAt:daysAgo(8), updatedAt:daysAgo(1),
+      reportedBy:'Yash P.', assignedTo:'Estate Maintenance Wing',
+      contributors:[{name:'Road Safety Collective',count:5,type:'club'},{name:'Student Volunteers Cell',count:4,type:'club'}],
+      history:[
+        {status:'REPORTED',changedBy:'Yash P.',timestamp:daysAgo(8),note:'Multiple near-miss incidents reported.'},
+        {status:'VERIFIED',changedBy:'Admin — Estate Office',timestamp:daysAgo(5),note:'Verified during evening inspection.'},
+        {status:'ASSIGNED',changedBy:'Admin — Estate Office',timestamp:daysAgo(4),note:'Solar lighting units assigned.'},
+        {status:'IN_PROGRESS',changedBy:'Estate Maintenance Wing',timestamp:daysAgo(1),note:'Installing 4 solar streetlight units.'},
+      ],
+    },
+    {
+      id:'P-002', title:'Overgrown greenery blocking sports ground path', category:'environment',
+      description:'Untrimmed hedges have narrowed the walking path to the sports ground to less than a foot wide.',
+      locationId:'muj-sports', image:categoryArt('environment','before'),
+      severity:34, urgency:30, safetyImpact:20, exposure:35, unresolvedDaysAtResolution:6,
+      communitySuitability:'COMMUNITY', duplicateProbability:0,
+      reportCount:3, contributorTarget:4, contributorCount:4,
+      status:'CONFIRMED', createdAt:daysAgo(22), updatedAt:daysAgo(14),
+      reportedBy:'Ishaan V.', assignedTo:'Horticulture Team', resolvedBy:'Horticulture Team',
+      afterImage:categoryArt('environment','after'),
+      resolutionNote:'Hedges trimmed and path widened to 4 feet. Maintenance schedule set to bi-weekly.',
+      contributors:[{name:'Green Campus Initiative',count:4,type:'club'}],
+      history:[
+        {status:'REPORTED',changedBy:'Ishaan V.',timestamp:daysAgo(22),note:'Path width down to under a foot.'},
+        {status:'VERIFIED',changedBy:'Admin — Facilities',timestamp:daysAgo(20),note:'Confirmed on-site.'},
+        {status:'ASSIGNED',changedBy:'Admin — Facilities',timestamp:daysAgo(18),note:'Assigned to Horticulture Team.'},
+        {status:'IN_PROGRESS',changedBy:'Horticulture Team',timestamp:daysAgo(16),note:'Trimming in progress.'},
+        {status:'RESOLVED',changedBy:'Horticulture Team',timestamp:daysAgo(15),note:'Path cleared, evidence uploaded.'},
+        {status:'CONFIRMED',changedBy:'Admin — Facilities',timestamp:daysAgo(14),note:'Visual verification passed. Closed.'},
+      ],
+    },
+    {
+      id:'P-058', title:'Pothole widening near MUJ Front Gate', category:'roads',
+      description:'A previously small crack near the MUJ front gate speed breaker has widened into a pothole after recent rain.',
+      locationId:'muj-gate', image:categoryArt('roads','before'),
+      severity:60, urgency:55, safetyImpact:58, exposure:55,
+      communitySuitability:'ADMIN', duplicateProbability:0,
+      reportCount:3, contributorTarget:4, contributorCount:0,
+      status:'REPORTED', createdAt:daysAgo(2), updatedAt:daysAgo(2),
+      reportedBy:'Meher A.', assignedTo:null,
+      contributors:[],
+      history:[{status:'REPORTED',changedBy:'Meher A.',timestamp:daysAgo(2),note:'Widened after Tuesday rain.'}],
+    },
+    {
+      id:'P-063', title:'Drainage overflow near Corridor Midpoint', category:'water',
+      description:'Sewage drain cover missing near the midpoint bus stop, overflowing during peak hours.',
+      locationId:'corridor-mid', image:categoryArt('water','before'),
+      severity:70, urgency:68, safetyImpact:64, exposure:66,
+      communitySuitability:'ADMIN', duplicateProbability:0,
+      reportCount:7, contributorTarget:6, contributorCount:1,
+      status:'VERIFIED', createdAt:daysAgo(5), updatedAt:daysAgo(2),
+      reportedBy:'Farhan I.', assignedTo:null,
+      contributors:[{name:'Civil Engineering Society',count:1,type:'club'}],
+      history:[
+        {status:'REPORTED',changedBy:'Farhan I.',timestamp:daysAgo(5),note:'Cover missing, exposed drop.'},
+        {status:'VERIFIED',changedBy:'Admin — Estate Office',timestamp:daysAgo(2),note:'Confirmed hazard, cover ordered.'},
+      ],
+    },
+  ];
+  // priority scoring for each problem, derived deterministically
+  PROBLEMS.forEach(p=>{
+    const unresolvedDays = Math.round((Date.now()-p.createdAt.getTime())/86400000);
+    p.unresolvedDays = unresolvedDays;
+    p.priorityScore = computePriority({severity:p.severity, urgency:p.urgency, safetyImpact:p.safetyImpact, exposure:p.exposure, unresolvedDays: isActive(p)? unresolvedDays : (p.unresolvedDaysAtResolution||unresolvedDays)});
+    p.severityLabel = severityLabel(p.priorityScore);
+  });
+}
+seedData();
+restoreData();
+
+function findProblem(id){ return PROBLEMS.find(p=>p.id===id); }
+
+function nearestLocationFromCoords(lat, lon){
+  let best=null, bestDistance=Infinity;
+  Object.entries(REAL_MAP_COORDS).forEach(([id, point])=>{
+    const d=Math.hypot((point[0]-lat)*111, (point[1]-lon)*111*Math.cos(lat*Math.PI/180));
+    if(d<bestDistance){ bestDistance=d; best=locById(id); }
+  });
+  return best;
+}
+
+
+/* Duplicate detection: mock deterministic similarity based on category + proximity + keyword overlap */
+function detectDuplicates(draft){
+  const draftLoc = locById(draft.locationId);
+  const candidates = PROBLEMS.filter(p=>p.category===draft.category);
+  let best=null, bestScore=0;
+  candidates.forEach(p=>{
+    const pLoc = locById(p.locationId);
+    let score=0;
+    if(pLoc && draftLoc){
+      const dist = Math.hypot(pLoc.x-draftLoc.x, pLoc.y-draftLoc.y);
+      score += Math.max(0, 55 - dist*2.1); // proximity component
+    }
+    score += 25; // same-category baseline
+    const words = (draft.description||'').toLowerCase().split(/\W+/).filter(w=>w.length>3);
+    const pwords = (p.title+' '+p.description).toLowerCase();
+    const overlap = words.filter(w=>pwords.includes(w)).length;
+    score += Math.min(20, overlap*4);
+    score = Math.min(97, Math.round(score));
+    if(score>bestScore){ bestScore=score; best=p; }
+  });
+  return bestScore>=55 ? {problem:best, probability:bestScore} : {problem:null, probability:bestScore};
+}
+
+/* Assisted assessment: deterministic, explainable prototype logic. Not a remote AI model. */
+function runAIAnalysis(draft){
+  const cat = catInfo(draft.category);
+  const desc = (draft.description||'').toLowerCase();
+  const dup = detectDuplicates(draft);
+  const zone = locById(draft.locationId)?.zone || 'CORRIDOR';
+
+  const severityBase = {roads:78, water:74, waste:52, electricity:70, accessibility:58, environment:36, safety:80, other:50}[draft.category] ?? 50;
+  const urgencyBase = {roads:74, water:70, waste:46, electricity:66, accessibility:44, environment:32, safety:78, other:46}[draft.category] ?? 46;
+  const safetyBase = {roads:82, water:58, waste:34, electricity:74, accessibility:40, environment:20, safety:88, other:36}[draft.category] ?? 40;
+  const exposureBase = zone==='GHS'||zone==='CORRIDOR' ? 72 : 58;
+
+  const urgentWords = ['urgent','danger','accident','unsafe','injur','block','severe','deep','large','flood'];
+  const bump = urgentWords.some(w=>desc.includes(w)) ? 8 : 0;
+
+  const severity = Math.min(97, severityBase+bump);
+  const urgency = Math.min(97, urgencyBase+bump);
+  const safetyImpact = Math.min(97, safetyBase+bump);
+  const exposure = Math.min(95, exposureBase);
+  const priorityScore = computePriority({severity, urgency, safetyImpact, exposure, unresolvedDays:0});
+  const sevLabel = severityLabel(priorityScore);
+
+  let suitability = 'COMMUNITY';
+  if(['electricity','safety'].includes(draft.category)) suitability = dup.probability>60 ? 'HYBRID' : 'ADMIN';
+  else if(['roads'].includes(draft.category)) suitability='HYBRID';
+  else if(['accessibility'].includes(draft.category)) suitability='ADMIN';
+
+  const reasoning = [];
+  if(exposure>65) reasoning.push(`High pedestrian / vehicle exposure in the ${zone==='GHS'?'GHS':zone==='MUJ'?'MUJ':'corridor'} zone`);
+  if(safetyImpact>70) reasoning.push('Potential safety impact identified from the report details');
+  if(dup.probability>=55) reasoning.push(`${dup.probability}% overlap with an existing nearby report`);
+  if(draft.category==='roads'||draft.category==='safety') reasoning.push('Recurring issue type for this stretch of the corridor');
+  if(reasoning.length<2) reasoning.push('Score is based on the selected category, description signals and location exposure');
+
+  return {
+    problemTitle: draft.title || `${cat.label} issue reported near ${locById(draft.locationId)?.label||'campus'}`,
+    category: draft.category,
+    severity: sevLabel,
+    severityScore: severity,
+    urgency, safetyImpact, exposure,
+    priorityScore,
+    communitySuitability: suitability,
+    duplicateProbability: dup.probability,
+    duplicateOf: dup.problem,
+    reasoning,
+    recommendedActions: sevLabel==='HIGH'||sevLabel==='CRITICAL' ? ['Flag for admin verification within 24h','Notify nearby contributor clubs'] : ['Add to community feed','Monitor report count'],
+  };
+}
+
+/* ---------------- STATE ---------------- */
+const state = {
+  role: null, // 'student' | 'admin'
+  userName: null,
+  userId: null,
+  view: 'landing',
+  history: [],
+  activeProblemId: null,
+  studentTab: 'home',
+  adminTab: 'dashboard',
+  feedFilters: {category:'all', status:'all', sort:'priority', mode:'list'},
+  report: null, // draft
+  modal: null,
+  contributeChoice: null,
+  roleHint: 'student',
+};
+
+function makeUserId(name){
+  return 'user-'+(name||'guest').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
+}
+
+function saveData(){
+  try{
+    localStorage.setItem('corridor-problems-v2', JSON.stringify(PROBLEMS));
+  }catch(err){ console.warn('Could not persist demo data', err); }
+}
+
+function reviveProblemDates(p){
+  ['createdAt','updatedAt'].forEach(k=>{ if(p[k]) p[k]=new Date(p[k]); });
+  if(p.createdAt) p.unresolvedDays=Math.max(0,Math.round((Date.now()-p.createdAt.getTime())/86400000));
+  if(p.history) p.history.forEach(h=>{ if(h.timestamp) h.timestamp=new Date(h.timestamp); });
+  return p;
+}
+
+function normalizeData(){
+  PROBLEMS.forEach(p=>{
+    if(!p.reportedById && p.reportedBy) p.reportedById=makeUserId(p.reportedBy);
+    if(!Array.isArray(p.participantIds)) p.participantIds=[];
+    if(p.priorityScore==null) p.priorityScore=computePriority({severity:p.severity||0,urgency:p.urgency||0,safetyImpact:p.safetyImpact||0,exposure:p.exposure||0,unresolvedDays:p.unresolvedDays||0});
+    if(!p.severityLabel) p.severityLabel=severityLabel(p.priorityScore);
+  });
+}
+
+function restoreData(){
+  try{
+    const raw=localStorage.getItem('corridor-problems-v2');
+    if(!raw) return;
+    const saved=JSON.parse(raw);
+    if(Array.isArray(saved) && saved.length) PROBLEMS=saved.map(reviveProblemDates);
+  }catch(err){ console.warn('Could not restore demo data', err); }
+  normalizeData();
+}
+
+
+function resetReportDraft(){
+  state.report = {
+    step:1, locationId:null, category:null, description:'', imageData:null,
+    analysis:null, analyzing:false, analysisTimerActive:false, thinkStep:0, resolvedDuplicateChoice:null,
+  };
+}
+
+function navigate(view, opts={}){
+  if(state.view && state.view!==view) state.history.push(state.view);
+  state.view = view;
+  Object.assign(state, opts);
+  window.scrollTo(0,0);
+  render();
+}
+function goBack(){
+  const prev = state.history.pop();
+  if(prev){ state.view=prev; render(); window.scrollTo(0,0); }
+}
+
+function toast(msg, kind='default'){
+  const wrap = document.getElementById('toastwrap');
+  const id = 'toast-'+(TOAST_ID++);
+  const iconName = kind==='success'?'check':kind==='error'?'warn':'sparkle';
+  const color = kind==='success'?'var(--green)':kind==='error'?'var(--red)':'var(--accent)';
+  const el = document.createElement('div');
+  el.className='toast'; el.id=id;
+  el.innerHTML = `<span style="color:${color}">${icon(iconName,16)}</span><span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .25s ease, transform .25s ease'; el.style.opacity='0'; el.style.transform='translateY(-8px)'; setTimeout(()=>el.remove(),260); }, 2600);
+}
+
+/* ---------------- SHARED COMPONENTS ---------------- */
+function priorityRing(score, size=64, showLabel=true){
+  const r = (size/2)-6;
+  const c = 2*Math.PI*r;
+  const pct = score/100;
+  const color = priorityColorVar(score);
+  const fontSize = size>=80? 20 : size>=56? 15 : 12;
+  return `<div class="pring" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--border)" stroke-width="5"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${c*(1-pct)}"/>
+    </svg>
+    <div class="pring-val" style="font-size:${fontSize}px;color:${color}">${score}${showLabel?'<small>/ 100</small>':''}</div>
+  </div>`;
+}
+
+function severityBadge(label){
+  const color = severityColor(label);
+  return `<span class="badge badge-${color}"><span class="badge-dot" style="background:currentColor"></span>${label} PRIORITY</span>`;
+}
+function statusBadge(status){
+  const map = {
+    REPORTED:'gray', VERIFIED:'cyan', ASSIGNED:'cyan', IN_PROGRESS:'amber', RESOLVED:'green', CONFIRMED:'green'
+  };
+  return `<span class="badge badge-${map[status]||'gray'}">${STATUS_LABELS[status]||status}</span>`;
+}
+function suitabilityBadge(s){
+  const map = {COMMUNITY:'green', ADMIN:'accent', HYBRID:'cyan'};
+  const label = {COMMUNITY:'Community-led', ADMIN:'Admin-led', HYBRID:'Hybrid'}[s]||s;
+  return `<span class="badge badge-${map[s]||'gray'}">${label}</span>`;
+}
+
+function problemCard(p, opts={}){
+  const loc = locById(p.locationId);
+  const cat = catInfo(p.category);
+  return `<div class="card card-hover clickable" data-open-problem="${p.id}" style="display:flex;gap:14px;">
+    <div class="image-tile" style="width:88px;height:88px;flex-shrink:0;">${p.image}</div>
+    <div class="col flex1" style="min-width:0;gap:6px;">
+      <div class="row between" style="gap:8px;">
+        <div class="row gap-6" style="min-width:0;">
+          ${icon(cat.icon,14,'var(--text-lo)')}
+          <span class="tiny faint bold" style="text-transform:uppercase;letter-spacing:0.03em;">${cat.label}</span>
+        </div>
+        ${statusBadge(p.status)}
+      </div>
+      <h3 style="font-size:15px;font-weight:600;line-height:1.3;font-family:var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</h3>
+      <div class="row gap-6 muted small">${icon('pin',13,'var(--text-lo)')}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${loc?loc.label:''}</span></div>
+      <div class="row between" style="margin-top:4px;">
+        <div class="row gap-12 tiny faint">
+          <span>${p.reportCount} reports</span><span>&middot;</span>
+          <span>${p.contributorCount} contributors</span><span>&middot;</span>
+          <span>${p.unresolvedDays}d unresolved</span>
+        </div>
+      </div>
+    </div>
+    <div class="col center" style="flex-shrink:0;">${priorityRing(p.priorityScore,56)}</div>
+  </div>`;
+}
+
+function statusStepper(currentStatus){
+  const idx = STATUS_FLOW.indexOf(currentStatus);
+  return `<div class="stepper">${STATUS_FLOW.map((s,i)=>{
+    const cls = i<idx?'done':i===idx?'current':'';
+    return `<div class="step ${cls}">
+      <div class="step-dot">${i<idx?icon('check',13,'#fff',2.4):`<span class="tiny bold" style="color:${i===idx?'#fff':'var(--text-lo)'}">${i+1}</span>`}</div>
+      <div class="step-line"></div>
+      <div class="step-label">${STATUS_LABELS[s]}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* Real MUJ ↔ GHS map — Leaflet + OpenStreetMap */
+const REAL_MAP_COORDS = {
+  'muj-gate':[26.84455,75.56505],
+  'muj-block5':[26.84275,75.56600],
+  'muj-sports':[26.84170,75.56655],
+  'muj-hostel':[26.84175,75.56305],
+  'corridor-mid':[26.84170,75.56345],
+  'corridor-dhaba':[26.84135,75.56305],
+  'corridor-turn':[26.84215,75.56405],
+  'ghs-gate':[26.84120,75.56278],
+  'ghs-main':[26.84102,75.56255],
+  'ghs-parking':[26.84142,75.56272]
+};
+
+function severityHeatColor(score){
+  const s=Math.max(0,Math.min(100,Number(score)||0));
+  const hue=Math.round(120-(s*1.2)); // green → yellow → orange → red
+  return `hsl(${hue} 86% 50%)`;
+}
+
+function corridorMap({height=320,pins=[],onPinAttr='data-map-pin',highlightId=null,selectable=false,problemIds=null}={}){
+  const mapId='corridor-real-map-'+Math.random().toString(36).slice(2,8);
+  const problemCount = pins.reduce((n,loc)=>n + PROBLEMS.filter(p=>p.locationId===loc.id && isActive(p)).length,0);
+  return `<div class="real-map-shell" style="height:${height}px;">
+    <div id="${mapId}" class="real-map" data-real-map="1" data-map-problem-ids="${problemIds ? problemIds.join(',') : ''}"></div>
+    <div class="map-location-badge">MUJ ↔ GHS · CONNECTING CORRIDOR</div><div class="map-live-pill"><span class="map-live-dot"></span>INTERACTIVE PROBLEM MAP</div>
+    <div class="map-legend">
+      <div class="map-legend-title">Problem severity</div>
+      <div class="map-gradient"></div>
+      <div class="map-legend-labels"><span>LOW</span><span>MED</span><span>HIGH</span><span>CRITICAL</span></div>
+    </div>
+  </div>`;
+}
+
+function initRealCampusMaps(){
+  if(typeof L==='undefined') return;
+  document.querySelectorAll('[data-real-map]').forEach(el=>{
+    if(el._leaflet_id) return;
+    const map=L.map(el,{zoomControl:true,scrollWheelZoom:true,dragging:true,doubleClickZoom:true,touchZoom:true,boxZoom:true,keyboard:true,preferCanvas:true,zoomSnap:.25,zoomDelta:.5});
+    const muj=[26.84292,75.56522], ghs=[26.8411252,75.5626736];
+    const allPts=[muj,ghs,...Object.values(REAL_MAP_COORDS)];
+    const bounds=L.latLngBounds(allPts);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      maxZoom:20,
+      subdomains:'abcd',
+      attribution:'© OpenStreetMap contributors © CARTO'
+    }).addTo(map);
+
+    // Subtle corridor emphasis over the real basemap.
+    L.polyline([
+      [26.84292,75.56522],
+      [26.84245,75.56475],
+      [26.84210,75.56405],
+      [26.84170,75.56345],
+      [26.84135,75.56305],
+      [26.8411252,75.5626736]
+    ],{color:'#7C6CFF',weight:7,opacity:.16,lineCap:'round'}).addTo(map);
+    L.polyline([
+      [26.84292,75.56522],
+      [26.84245,75.56475],
+      [26.84210,75.56405],
+      [26.84170,75.56345],
+      [26.84135,75.56305],
+      [26.8411252,75.5626736]
+    ],{color:'#7C6CFF',weight:2.5,opacity:.8,dashArray:'8 8',lineCap:'round'}).addTo(map);
+
+    const addLabel=(latlng,text,accent)=>{
+      L.marker(latlng,{interactive:false,icon:L.divIcon({
+        className:'',html:`<div class="campus-label" style="border-color:${accent}66">${text}</div>`,
+        iconSize:[0,0],iconAnchor:[0,0]
+      })}).addTo(map);
+    };
+    addLabel([26.84305,75.56525],'MUJ MAIN CAMPUS','#7C6CFF');
+    addLabel([26.84092,75.56255],'GHS HOSTEL','#4FC1E9');
+
+    // Render only the problems requested by the current view/filter.
+    const requestedIds=(el.getAttribute('data-map-problem-ids')||'').split(',').filter(Boolean);
+    const visibleProblems=PROBLEMS.filter(p=>p.locationId && (requestedIds.length ? requestedIds.includes(p.id) : isActive(p)));
+    visibleProblems.forEach(p=>{
+      const ll=REAL_MAP_COORDS[p.locationId];
+      if(!ll) return;
+      const score=Number(p.priorityScore ?? p.severity ?? 0);
+      const color=severityHeatColor(score);
+      // Keep severity halos compact so nearby issues remain visually distinguishable.
+      const radius=18 + score*0.35;
+      const spot=L.circle(ll,{radius,color,weight:0,fillColor:color,fillOpacity:.13,interactive:false}).addTo(map);
+      L.circle(ll,{radius:radius*.44,color,weight:0,fillColor:color,fillOpacity:.20,interactive:false}).addTo(map);
+      const problemMarker=L.circleMarker(ll,{
+        radius:5 + score/30,
+        color:'#fff',
+        weight:1.5,
+        fillColor:color,
+        fillOpacity:.98,
+        bubblingMouseEvents:false,
+        interactive:true
+      });
+
+      // Hover = quick problem preview; click = open the full problem page.
+      const locationLabel=locById(p.locationId)?.label||'Campus';
+      const quickPreview=`<div class="map-problem-preview">
+        <strong>${escapeHtml(p.title)}</strong>
+        <div class="map-problem-meta">${escapeHtml(locationLabel)} · ${STATUS_LABELS[p.status]||p.status}</div>
+        <div class="severity"><span class="sev-dot" style="background:${color}"></span>Priority ${score}/100 · ${severityLabel(score)}</div>
+        <div class="map-problem-hint">Click to view problem</div>
+      </div>`;
+
+      problemMarker.bindTooltip(quickPreview,{
+        direction:'top',
+        offset:[0,-10],
+        opacity:.98,
+        sticky:false,
+        className:'map-problem-tooltip',
+        interactive:false
+      });
+
+      problemMarker.on('click',()=>{
+        const targetView = state.role==='admin' ? 'admin-problem-detail' : 'problem-detail';
+        navigate(targetView,{activeProblemId:p.id});
+      });
+
+      problemMarker.addTo(map);
+    });
+
+    // Report locations remain selectable and visible even without an active problem.
+    LOCATIONS.forEach(loc=>{
+      const ll=REAL_MAP_COORDS[loc.id]; if(!ll) return;
+      const locationProblems=visibleProblems.filter(p=>p.locationId===loc.id);
+      // On normal browsing maps, let the problem marker own the location so
+      // hover/click always opens the actual problem. In the report flow the
+      // location marker remains selectable.
+      if(locationProblems.length && state.view!=='report-flow') return;
+      const score=Math.max(0,...locationProblems.map(p=>Number(p.priorityScore ?? p.severity ?? 0)));
+      const color=score ? severityHeatColor(score) : (loc.zone==='MUJ'?'#7C6CFF':loc.zone==='GHS'?'#4FC1E9':'#F0A93B');
+      const selected=(state.report && state.report.locationId===loc.id);
+      const marker=L.circleMarker(ll,{radius:selected?9:6,color:'#fff',weight:selected?3:2,fillColor:color,fillOpacity:1});
+      marker.bindTooltip(loc.label,{direction:'top',offset:[0,-6]});
+      marker.on('click',()=>{
+        if(state.view==='report-flow'){
+          state.report.locationId=loc.id;
+          render();
+        }
+      });
+      marker.addTo(map);
+    });
+
+    map.fitBounds(bounds.pad(.28),{padding:[18,18]});
+    setTimeout(()=>map.invalidateSize(),50);
+  });
+}
+
+function topbar(){
+  return `<div class="topbar">
+    <div class="container row between" style="height:64px;">
+      <div class="brand clickable" data-nav="landing">
+        <div class="brand-mark">${icon('compass',17,'#fff',2.2)}</div>
+        <span>Corridor</span>
+      </div>
+      <div class="row gap-12">
+        ${state.role ? `<button class="btn btn-ghost btn-sm row gap-6" data-action="logout">${icon('logout',15)} <span class="hidden-mobile">Log out</span></button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function bottomNav(){
+  const items = [
+    {id:'home', label:'Home', icon:'home', view:'student-home'},
+    {id:'explore', label:'Explore', icon:'compass', view:'feed'},
+    {id:'contribute', label:'Contribute', icon:'hands', view:'feed', filter:true},
+    {id:'activity', label:'My activity', icon:'activity', view:'my-activity'},
+  ];
+  return `<div class="bottomnav">${items.map(it=>`
+    <button class="bottomnav-item ${state.studentTab===it.id?'active':''}" data-student-tab="${it.id}">
+      ${icon(it.icon,21)}<span>${it.label}</span>
+    </button>`).join('')}</div>`;
+}
+
+function adminSidebar(){
+  const items = [
+    {id:'dashboard', label:'Dashboard', icon:'grid'},
+    {id:'problems', label:'Problems', icon:'layers'},
+    {id:'map', label:'Map', icon:'map'},
+    {id:'community', label:'Community', icon:'users'},
+    {id:'analytics', label:'Analytics', icon:'bar'},
+    {id:'history', label:'History', icon:'history'},
+  ];
+  return `<div class="sidebar">
+    <div class="brand clickable" style="padding:8px 10px 24px;" data-nav="landing">
+      <div class="brand-mark">${icon('compass',17,'#fff',2.2)}</div><span style="font-size:16px;">Corridor</span>
+    </div>
+    <div class="col gap-4">
+      ${items.map(it=>`<button class="sidenav-item ${state.adminTab===it.id?'active':''}" data-admin-tab="${it.id}">${icon(it.icon,18)}<span>${it.label}</span></button>`).join('')}
+    </div>
+    <div class="flex1"></div>
+    <div class="divider" style="margin-bottom:14px;"></div>
+    <button class="sidenav-item" data-action="logout">${icon('logout',18)}<span>Log out</span></button>
+  </div>`;
+}
+
+function emptyState(iconName,title,body){
+  return `<div class="col center gap-12" style="padding:56px 20px;text-align:center;">
+    <div class="icon-box" style="width:56px;height:56px;">${icon(iconName,26,'var(--text-lo)')}</div>
+    <h3 style="font-size:16px;">${title}</h3>
+    <p class="muted small" style="max-width:280px;">${body}</p>
+  </div>`;
+}
+
+function modalWrap(innerHtml){
+  return `<div class="modal-overlay" data-close-modal="1">
+    <div class="modal-sheet" onclick="event.stopPropagation()">${innerHtml}</div>
+  </div>`;
+}
+
+/* ---------------- RENDER DISPATCH ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  const adminViews=['admin-dashboard','admin-problems','admin-problem-detail','admin-map','admin-community','admin-analytics','admin-history'];
+  const studentViews=['student-home','feed','problem-detail','report-flow','ai-analysis','my-activity'];
+  if(adminViews.includes(state.view) && state.role!=='admin'){ state.view='landing'; state.modal=null; }
+  if(studentViews.includes(state.view) && state.role!=='student'){ state.view='landing'; state.modal=null; }
+  let html = '';
+  switch(state.view){
+    case 'landing': html = renderLanding(); break;
+    case 'login': html = renderLogin(); break;
+    case 'student-home': html = renderStudentShell(renderStudentHome()); break;
+    case 'feed': html = renderStudentShell(renderFeed()); break;
+    case 'problem-detail': html = renderStudentShell(renderProblemDetail()); break;
+    case 'report-flow': html = renderStudentShell(renderReportFlow()); break;
+    case 'ai-analysis': html = renderStudentShell(renderAIAnalysisView()); break;
+    case 'my-activity': html = renderStudentShell(renderMyActivity()); break;
+    case 'admin-dashboard': html = renderAdminShell(renderAdminDashboard()); break;
+    case 'admin-problems': html = renderAdminShell(renderAdminProblems()); break;
+    case 'admin-problem-detail': html = renderAdminShell(renderAdminProblemDetail()); break;
+    case 'admin-map': html = renderAdminShell(renderAdminMap()); break;
+    case 'admin-community': html = renderAdminShell(renderAdminCommunity()); break;
+    case 'admin-analytics': html = renderAdminShell(renderAdminAnalytics()); break;
+    case 'admin-history': html = renderAdminShell(renderAdminHistory()); break;
+    default: html = renderLanding();
+  }
+  app.innerHTML = html + (state.modal ? modalWrap(state.modal()) : '');
+  attachHandlers();
+  if(state.view==='report-flow' || state.view==='admin-map' || state.view==='student-home' || state.view==='feed') setTimeout(initRealCampusMaps, 0);
+  if(state.view==='ai-analysis') driveAIAnalysis();
+  if(document.querySelector('[data-real-map]')) setTimeout(initRealCampusMaps, 20);
+}
+
+function renderStudentShell(inner){
+  return `${topbar()}<div style="padding-bottom:84px;">${inner}</div>${bottomNav()}`;
+}
+function renderAdminShell(inner){
+  return `<div class="adminshell">${adminSidebar()}<div class="admin-main">${inner}</div></div>`;
+}
+
+/* ---------------- SECTION 01 — LANDING ---------------- */
+function renderLanding(){
+  const resolvedCount = PROBLEMS.filter(p=>p.status==='CONFIRMED'||p.status==='RESOLVED').length;
+  const activeCount = PROBLEMS.filter(isActive).length;
+  const contributors = PROBLEMS.reduce((s,p)=>s+p.contributorCount,0);
+  return `
+  <div class="topbar"><div class="container row between" style="height:64px;">
+    <div class="brand"><div class="brand-mark">${icon('compass',17,'#fff',2.2)}</div><span>Corridor</span></div>
+    <div class="row gap-8"><span class="badge badge-gray">MUJ &middot; GHS &middot; Corridor</span></div>
+  </div></div>
+  <main class="container" style="min-height:calc(100vh - 64px);display:flex;align-items:flex-start;justify-content:center;padding-top:64px;padding-bottom:48px;">
+    <div class="col center" style="text-align:center;width:100%;max-width:680px;">
+      <span class="badge badge-accent" style="margin-bottom:26px;">${icon('sparkle',13)} Explainable campus problem solving</span>
+      <h1 style="font-size:50px;line-height:1.04;font-weight:700;letter-spacing:-0.035em;">See it. Report it.<br/>Solve it.</h1>
+      <p class="muted" style="font-size:17px;margin-top:22px;max-width:540px;line-height:1.65;">A community-powered campus problem-solving platform for MUJ, GHS and the corridor connecting them.</p>
+      <div class="row gap-12 wrap center" style="margin-top:36px;">
+        <button class="btn btn-primary btn-lg" data-nav="login" data-role-hint="student">${icon('users',18)} Continue as student</button>
+        <button class="btn btn-secondary btn-lg" data-nav="login" data-role-hint="admin">${icon('grid',18)} Administrator</button>
+      </div>
+
+      <div class="row gap-16 wrap center" style="margin-top:64px;">
+        <div class="statcard col gap-4" style="min-width:150px;"><span class="statval" style="color:var(--green)">${resolvedCount}</span><span class="small muted">Problems resolved</span></div>
+        <div class="statcard col gap-4" style="min-width:150px;"><span class="statval" style="color:var(--amber)">${activeCount}</span><span class="small muted">Active right now</span></div>
+        <div class="statcard col gap-4" style="min-width:150px;"><span class="statval" style="color:var(--accent)">${contributors}</span><span class="small muted">Active contributors</span></div>
+      </div>
+    </div>
+  </main>`;
+}
+/* ---------------- SECTION 02 — LOGIN ---------------- */
+function renderLogin(){
+  const hint = state.roleHint || 'student';
+  return `
+  <div class="topbar"><div class="container row" style="height:64px;">
+    <button class="btn btn-ghost btn-sm row gap-6" data-nav="landing">${icon('arrowLeft',16)} Back</button>
+  </div></div>
+  <div class="container col center" style="padding-top:64px;">
+    <div class="card" style="width:100%;max-width:400px;padding:32px 28px;">
+      <div class="col center" style="margin-bottom:26px;">
+        <div class="brand-mark" style="width:44px;height:44px;margin-bottom:14px;">${icon('compass',22,'#fff',2.2)}</div>
+        <h2 style="font-size:20px;">Sign in to Corridor</h2>
+        <p class="muted small" style="margin-top:6px;">Demo access — no password needed.</p>
+      </div>
+      <div class="row gap-8" style="margin-bottom:22px;background:var(--surface-2);padding:4px;border-radius:12px;">
+        <button class="btn btn-sm flex1" data-set-role-hint="student" style="background:${hint==='student'?'var(--accent)':'transparent'};color:${hint==='student'?'#fff':'var(--text-mid)'};">Student</button>
+        <button class="btn btn-sm flex1" data-set-role-hint="admin" style="background:${hint==='admin'?'var(--accent)':'transparent'};color:${hint==='admin'?'#fff':'var(--text-mid)'};">Administrator</button>
+      </div>
+      ${hint==='student' ? `
+        <label class="field-label">Full name</label>
+        <input class="input" id="login-name" placeholder="e.g. Ananya Rao" value="Ananya Rao" style="margin-bottom:14px;">
+        <label class="field-label">Student ID</label>
+        <input class="input" id="login-student-id" placeholder="MUJ2024CS0142" value="MUJ2024CS0142" style="margin-bottom:22px;">
+        <button class="btn btn-primary btn-block btn-lg" data-action="login-student">${icon('users',18)} Continue as student demo</button>
+      ` : `
+        <label class="field-label">Full name</label>
+        <input class="input" id="login-name-admin" placeholder="e.g. R. Mehta" value="R. Mehta" style="margin-bottom:14px;">
+        <label class="field-label">Department</label>
+        <input class="input" id="login-admin-dept" placeholder="Estate & Facilities Office" value="Estate & Facilities Office" style="margin-bottom:22px;">
+        <button class="btn btn-primary btn-block btn-lg" data-action="login-admin">${icon('grid',18)} Continue as admin demo</button>
+      `}
+    </div>
+  </div>`;
+}
+
+/* ---------------- SECTION 03 — STUDENT HOME ---------------- */
+function renderStudentHome(){
+  const active = PROBLEMS.filter(isActive);
+  const resolved = PROBLEMS.filter(p=>!isActive(p));
+  const contributors = PROBLEMS.reduce((s,p)=>s+p.contributorCount,0);
+  const highPriority = [...active].sort((a,b)=>b.priorityScore-a.priorityScore).slice(0,3);
+  const myReports = PROBLEMS.filter(p=>p.reportedById===state.userId);
+  return `
+  <div class="container" style="padding-top:22px;">
+    <div class="row between" style="margin-bottom:22px;">
+      <div>
+        <p class="muted small">Good to see you back,</p>
+        <h1 style="font-size:23px;">${state.userName||'Ananya'} 👋</h1>
+      </div>
+      <div class="avatar" style="width:44px;height:44px;">${(state.userName||'A').charAt(0)}</div>
+    </div>
+
+    <div class="row gap-12 wrap" style="margin-bottom:24px;">
+      <button class="btn btn-primary btn-lg flex1" style="min-width:200px;justify-content:flex-start;padding:20px;" data-action="start-report">
+        <span class="icon-box" style="background:rgba(255,255,255,0.18);border:none;">${icon('camera',20,'#fff')}</span>
+        <span class="col" style="align-items:flex-start;">
+          <span style="font-size:16px;">Report a problem</span>
+          <span style="font-size:12px;font-weight:500;opacity:0.85;">Takes under a minute</span>
+        </span>
+      </button>
+      <button class="btn btn-secondary btn-lg flex1" style="min-width:200px;justify-content:flex-start;padding:20px;" data-nav="feed" data-student-tab-set="contribute">
+        <span class="icon-box">${icon('hands',20,'var(--accent)')}</span>
+        <span class="col" style="align-items:flex-start;">
+          <span style="font-size:16px;">Contribute to a problem</span>
+          <span style="font-size:12px;font-weight:500;color:var(--text-mid);">${active.length} open right now</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="row gap-12 wrap" style="margin-bottom:24px;">
+      <div class="statcard flex1" style="min-width:120px;"><div class="row gap-8"><span style="color:var(--amber)">${icon('activity',16)}</span><span class="statval" style="font-size:20px;">${active.length}</span></div><span class="small muted">Active problems</span></div>
+      <div class="statcard flex1" style="min-width:120px;"><div class="row gap-8"><span style="color:var(--green)">${icon('check',16)}</span><span class="statval" style="font-size:20px;">${resolved.length}</span></div><span class="small muted">Resolved</span></div>
+      <div class="statcard flex1" style="min-width:120px;"><div class="row gap-8"><span style="color:var(--accent)">${icon('users',16)}</span><span class="statval" style="font-size:20px;">${contributors}</span></div><span class="small muted">Contributors</span></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;">
+      <div class="row between" style="padding:18px 20px 0;">
+        <h3 style="font-size:15px;">Campus map</h3>
+        <button class="btn btn-ghost btn-sm" data-nav="feed" data-set-feed-mode="map">Open full map ${icon('arrowRight',14)}</button>
+      </div>
+      <div style="padding:14px 20px 20px;">${corridorMap({height:440,pins:LOCATIONS})}</div>
+    </div>
+
+    <div class="row between" style="margin-bottom:14px;">
+      <h3 style="font-size:16px;">High-priority right now</h3>
+      <button class="btn btn-ghost btn-sm" data-nav="feed">See all ${icon('arrowRight',14)}</button>
+    </div>
+    <div class="col gap-12" style="margin-bottom:26px;">
+      ${highPriority.map(p=>problemCard(p)).join('')}
+    </div>
+
+    <h3 style="font-size:16px;margin-bottom:14px;">Your activity</h3>
+    <div class="col gap-12">
+      ${myReports.length? myReports.map(p=>problemCard(p)).join('') : emptyState('camera','Nothing reported yet','Problems you report will show up here so you can track their progress.')}
+    </div>
+  </div>`;
+}
+
+/* ---------------- SECTION 06 — COMMUNITY FEED ---------------- */
+function filteredProblems(){
+  let list = [...PROBLEMS];
+  const f = state.feedFilters;
+  if(f.category!=='all') list = list.filter(p=>p.category===f.category);
+  if(f.status==='active') list = list.filter(isActive);
+  if(f.status==='resolved') list = list.filter(p=>!isActive(p));
+  if(f.sort==='priority') list.sort((a,b)=>b.priorityScore-a.priorityScore);
+  if(f.sort==='recent') list.sort((a,b)=>b.createdAt-a.createdAt);
+  if(f.sort==='contributors') list.sort((a,b)=>b.contributorCount-a.contributorCount);
+  return list;
+}
+function renderFeed(){
+  const f = state.feedFilters;
+  const list = filteredProblems();
+  const recommended = [...PROBLEMS].filter(isActive).sort((a,b)=> (b.priorityScore + b.reportCount) - (a.priorityScore + a.reportCount)).slice(0,2);
+  return `
+  <div class="container" style="padding-top:22px;">
+    <div class="row between" style="margin-bottom:4px;">
+      <h1 style="font-size:22px;">Community problems</h1>
+      <div class="row gap-6" style="background:var(--surface-2);padding:4px;border-radius:10px;">
+        <button class="btn btn-sm" data-set-feed-mode="list" style="padding:6px 10px;background:${f.mode==='list'?'var(--surface-3)':'transparent'}">${icon('layers',15)}</button>
+        <button class="btn btn-sm" data-set-feed-mode="map" style="padding:6px 10px;background:${f.mode==='map'?'var(--surface-3)':'transparent'}">${icon('map',15)}</button>
+      </div>
+    </div>
+    <p class="muted small" style="margin-bottom:18px;">Discover issues across MUJ, GHS and the corridor — and put your effort where it matters most.</p>
+
+    <div class="row gap-8 scrollx" style="margin-bottom:14px;padding-bottom:2px;">
+      <button class="chip ${f.status==='all'?'active':''}" data-filter-status="all">All statuses</button>
+      <button class="chip ${f.status==='active'?'active':''}" data-filter-status="active">Active</button>
+      <button class="chip ${f.status==='resolved'?'active':''}" data-filter-status="resolved">Resolved</button>
+    </div>
+    <div class="row gap-8 scrollx" style="margin-bottom:18px;padding-bottom:2px;">
+      <button class="chip ${f.category==='all'?'active':''}" data-filter-category="all">All categories</button>
+      ${CATEGORIES.map(c=>`<button class="chip ${f.category===c.id?'active':''}" data-filter-category="${c.id}">${c.label}</button>`).join('')}
+    </div>
+    <div class="row between" style="margin-bottom:18px;">
+      <div class="row gap-6 muted small">${icon('filter',14)} ${list.length} problems</div>
+      <select class="input" style="width:auto;padding:8px 12px;font-size:13px;" data-sort-select>
+        <option value="priority" ${f.sort==='priority'?'selected':''}>Sort: Priority</option>
+        <option value="recent" ${f.sort==='recent'?'selected':''}>Sort: Most recent</option>
+        <option value="contributors" ${f.sort==='contributors'?'selected':''}>Sort: Most contributors</option>
+      </select>
+    </div>
+
+    ${f.mode==='map' ? `
+      <div class="card" style="padding:14px;margin-bottom:22px;">${corridorMap({height:460,pins:list.map(p=>({...locById(p.locationId),id:p.id})),problemIds:list.map(p=>p.id)})}</div>
+      <div class="col gap-12">${list.map(p=>problemCard(p)).join('')}</div>
+    ` : `
+      ${!f.category && f.status==='all' ? '' : ''}
+      ${state.feedFilters.status==='all' && state.feedFilters.category==='all' ? `
+        <h3 style="font-size:15px;margin-bottom:12px;">Recommended for you</h3>
+        <div class="col gap-12" style="margin-bottom:26px;">${recommended.map(p=>problemCard(p)).join('')}</div>
+        <div class="divider" style="margin-bottom:22px;"></div>
+      ` : ''}
+      <h3 style="font-size:15px;margin-bottom:12px;">All problems</h3>
+      <div class="col gap-12">${list.length? list.map(p=>problemCard(p)).join('') : emptyState('filter','No problems match','Try a different category or status filter.')}</div>
+    `}
+  </div>`;
+}
+
+function renderMyActivity(){
+  const mine = PROBLEMS.filter(p=>p.reportedById===state.userId || (p.participantIds||[]).includes(state.userId));
+  return `<div class="container" style="padding-top:22px;">
+    <h1 style="font-size:22px;margin-bottom:6px;">My activity</h1>
+    <p class="muted small" style="margin-bottom:22px;">Reports you've filed and problems you're contributing to.</p>
+    <div class="col gap-12">${mine.length? mine.map(p=>problemCard(p)).join('') : emptyState('activity','No activity yet','Report or contribute to a problem to see it tracked here.')}</div>
+  </div>`;
+}
+
+/* ---------------- SECTION 04 — REPORT A PROBLEM ---------------- */
+function renderReportFlow(){
+  if(!state.report) resetReportDraft();
+  const r = state.report;
+  const steps = ['Location','Category','Details','Review'];
+  const subtitles = [
+    'Pin the issue once — we will use it to route and prioritize the report.',
+    'Pick the closest match. You can still refine the details next.',
+    'Add the key facts. A photo is helpful, but the description is the required signal.',
+    'One quick check before the report enters AI analysis.'
+  ];
+  return `<div class="container report-shell">
+    <div class="report-top">
+      <div class="report-progress">
+        <button class="btn btn-secondary report-back-btn" data-action="report-back" aria-label="Go back to previous page">${icon('arrowLeft',17)}<span>Back</span></button>
+        <div class="report-progress-copy">
+          <div class="report-stepno">Step ${r.step} / 4</div>
+          <div class="report-stepname">${steps[r.step-1]}</div>
+        </div>
+        <div class="report-progressbar">${[1,2,3,4].map(i=>`<div class="flow-dot ${i<r.step?'done':i===r.step?'active':''}"></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="report-content">
+      <h1 class="report-heading">${steps[r.step-1]}</h1>
+      <p class="report-subtitle">${subtitles[r.step-1]}</p>
+      ${r.step===1?reportStepLocation():r.step===2?reportStepCategory():r.step===3?reportStepDetails():reportStepReview()}
+    </div>
+  </div>`;
+}
+
+function reportCta(label, enabled=true, action='report-next', iconName='arrowRight'){
+  return `<div class="report-cta"><button class="btn btn-primary btn-block btn-lg" ${enabled?'':'disabled'} data-action="${action}">${icon(iconName,17)}<span>${label}</span></button></div>`;
+}
+
+function reportStepLocation(){
+  const r = state.report;
+  const selected = locById(r.locationId);
+  return `
+  ${selected?`<div class="report-selected-note">${icon('check',14,'currentColor',2.5)} <span>Location selected: <strong>${selected.label}</strong></span></div>`:''}
+  <div class="card report-map-card">
+    ${corridorMap({height:360, pins:LOCATIONS, highlightId:r.locationId})}
+  </div>
+  <button class="btn btn-secondary btn-block" style="margin-bottom:12px;" data-action="use-current-location">${icon('crosshair',17)} Use my current location</button>
+  <label class="field-label" style="margin-bottom:7px;">Or choose a known location</label>
+  <div class="col gap-8 report-location-list" style="overflow-y:auto;margin-bottom:8px;">
+    ${LOCATIONS.map(l=>`<button class="btn btn-secondary report-choice" style="justify-content:space-between;padding:11px 13px;${r.locationId===l.id?'border-color:var(--accent);background:var(--accent-wash);':''}" data-select-location="${l.id}">
+      <span class="row gap-8">${icon('pin',15,r.locationId===l.id?'var(--accent)':'var(--text-lo)')} ${l.label}</span>
+      <span class="tiny faint">${l.zone}</span>
+    </button>`).join('')}
+  </div>
+  ${reportCta('Continue',!!r.locationId)}`;
+}
+
+function reportStepCategory(){
+  const r = state.report;
+  return `
+  <div class="catgrid report-category-grid">
+    ${CATEGORIES.map(c=>`<button class="catcard ${r.category===c.id?'selected':''}" data-select-category="${c.id}">
+      <span class="icon-box">${icon(c.icon,20,r.category===c.id?'var(--accent)':'var(--text-mid)')}</span>
+      <span style="font-size:13.5px;font-weight:600;line-height:1.3;">${c.label}</span>
+    </button>`).join('')}
+  </div>
+  ${r.category?`<div class="report-selected-note" style="margin-top:12px;">${icon('check',14,'currentColor',2.5)} <span>${catInfo(r.category).label} selected</span></div>`:''}
+  ${reportCta('Continue',!!r.category)}`;
+}
+
+function reportStepDetails(){
+  const r = state.report;
+  return `
+  <div class="report-details-card">
+    <label class="field-label">Describe the problem</label>
+    <textarea class="textarea" id="desc-input" placeholder="What's wrong, and why does it matter? e.g. Deep potholes forming right on the turn, bikes are swerving into traffic to avoid them.">${r.description||''}</textarea>
+    <p class="tiny faint" style="margin:8px 0 16px;">${icon('mic',13)} Voice input available on the mobile app</p>
+    <label class="field-label">Add a photo <span class="faint" style="font-weight:400;">(optional)</span></label>
+    ${r.imageData ? `
+      <div class="image-tile" style="height:170px;margin-bottom:8px;position:relative;">
+        <img src="${r.imageData}" style="width:100%;height:100%;object-fit:cover;">
+        <button class="btn btn-icon" style="position:absolute;top:10px;right:10px;background:rgba(10,11,13,0.7);" data-action="clear-image">${icon('close',16,'#fff')}</button>
+      </div>` : `
+      <label class="card clickable col center gap-8 report-upload" style="border-style:dashed;margin-bottom:8px;">
+        <input type="file" accept="image/*" id="image-input">
+        ${icon('camera',24,'var(--text-lo)')}
+        <span class="small muted">Tap to add a photo</span>
+      </label>`}
+    <p class="tiny faint">Photos help our AI classify severity and detect duplicates faster.</p>
+  </div>
+  ${reportCta('Review report',!!(r.description&&r.description.trim().length>4))}`;
+}
+
+function reportStepReview(){
+  const r = state.report;
+  const loc = locById(r.locationId);
+  const cat = catInfo(r.category);
+  return `
+  <div class="card report-review-card" style="margin-bottom:14px;padding:0;overflow:hidden;">
+    <div class="image-tile" style="height:150px;">${r.imageData? `<img src="${r.imageData}" style="width:100%;height:100%;object-fit:cover;">` : categoryArt(r.category,'before')}</div>
+    <div style="padding:16px;">
+      <div class="row gap-8" style="margin-bottom:9px;">${icon(cat.icon,15,'var(--accent)')}<span class="small bold">${cat.label}</span></div>
+      <div class="row gap-8 muted small" style="margin-bottom:12px;">${icon('pin',14)} ${loc?loc.label:''}</div>
+      <p style="font-size:14px;line-height:1.55;">${r.description}</p>
+    </div>
+  </div>
+  ${reportCta('Run assisted analysis',true,'submit-report','sparkle')}`;
+}
+
+/* ---------------- SECTION 05 — AI ANALYSIS ---------------- */
+function renderAIAnalysisView(){
+  const r = state.report;
+  if(!r.analysis && !r.analyzing) { r.analyzing = true; r.thinkStep = 0; }
+  const thinkLines = ['Checking report details...','Scoring severity and urgency...','Checking similar reports nearby...','Calculating transparent priority score...'];
+  const progress = r.analyzing ? Math.min(100, Math.round((r.thinkStep / thinkLines.length) * 100)) : 100;
+  return `<div class="container" style="padding-top:18px;max-width:600px;">
+    <div class="ai-shell" style="margin-bottom:18px;">
+      ${r.analyzing ? '<div class="scanline"></div>' : ''}
+      ${r.analyzing ? `
+        <div class="ai-hero">
+          <div class="ai-orbit"><div class="ai-core"><span class="ai-pulse"></span></div></div>
+          <div class="ai-status">${icon('sparkle',12,'currentColor')} ${r.thinkStep>=thinkLines.length-1?'Finalizing':'Assisted assessment'}</div>
+          <h1 class="ai-hero-title">Assessment is evaluating your report</h1>
+          <p class="ai-hero-sub">We’re using the report details, mapped location and nearby reports to produce an explainable prototype assessment.</p>
+          <div class="ai-progress" style="width:100%;"><div class="ai-progress-fill" style="width:${progress}%;"></div></div>
+        </div>
+        <div id="think-lines" class="panel" style="padding:8px 14px;background:rgba(255,255,255,.018);">
+          ${thinkLines.map((t,i)=>`<div class="think-line ${i<r.thinkStep?'done':''}" style="display:${i<=r.thinkStep?'flex':'none'}">
+            ${i<r.thinkStep ? `<span class="think-check">${icon('check',10,'currentColor',3)}</span>` : `<span class="ai-pulse" style="width:8px;height:8px;"></span>`}
+            <span>${t}</span>
+          </div>`).join('')}
+        </div>` : `
+        <div class="ai-result-header">
+          <div>
+            <div class="ai-result-label">Assisted assessment</div>
+            <h2 style="font-size:22px;margin-top:4px;">Analysis complete</h2>
+          </div>
+          <div class="ai-status" style="margin:0;color:var(--green);border-color:rgba(76,220,151,.25);">${icon('check',12,'currentColor')} Ready</div>
+        </div>
+        ${renderAnalysisResult(r.analysis)}
+      `}
+    </div>
+    ${!r.analyzing ? `
+      <div class="ai-action-zone col gap-10">
+        <div class="row between" style="margin-bottom:2px;">
+          <span class="small bold">What should happen next?</span>
+          <span class="tiny faint">Prototype recommendation</span>
+        </div>
+        ${r.analysis.duplicateProbability>=55 ? `
+          <button class="btn btn-primary btn-block btn-lg" data-action="support-existing">${icon('hands',18)} Support existing report</button>
+          <button class="btn btn-secondary btn-block" data-action="create-new-anyway">Create a new report anyway</button>
+        ` : `
+          <button class="btn btn-primary btn-block btn-lg" data-action="create-new-problem">${icon('plus',18)} Create new problem</button>
+        `}
+      </div>` : ''}
+  </div>`;
+}
+
+function renderAnalysisResult(a){
+  const dupBlock = a.duplicateProbability>=55 ? `
+    <div class="panel" style="padding:14px;margin-top:8px;border-color:var(--amber);">
+      <div class="row gap-8" style="margin-bottom:6px;color:var(--amber);">${icon('warn',16)}<span class="bold small">Possible duplicate</span></div>
+      <p class="small muted">${a.duplicateProbability}% similarity with <b class="mono" style="color:var(--text-hi)">${a.duplicateOf?.id}</b> — "${a.duplicateOf?.title}"</p>
+    </div>` : `
+    <div class="panel" style="padding:14px;margin-top:8px;border-color:var(--green);">
+      <div class="row gap-8" style="color:var(--green);">${icon('check',16)}<span class="bold small">No likely duplicate found nearby</span></div>
+    </div>`;
+  return `<div class="slide-up">
+    <div class="ai-score-card">
+      <div class="row gap-16">
+        ${priorityRing(a.priorityScore,92)}
+        <div class="col gap-8 flex1">
+          ${severityBadge(a.severity)}
+          <h3 style="font-size:19px;line-height:1.25;">${a.problemTitle}</h3>
+          <div class="row gap-8 wrap">${suitabilityBadge(a.communitySuitability)}<span class="badge badge-gray">${catInfo(a.category).label}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="row gap-10 wrap" style="margin-bottom:14px;">
+      <div class="statcard flex1" style="min-width:110px;"><span class="small muted">Urgency</span><div class="statval" style="font-size:18px;color:var(--cyan);">${a.urgency}</div></div>
+      <div class="statcard flex1" style="min-width:110px;"><span class="small muted">Safety impact</span><div class="statval" style="font-size:18px;color:var(--red);">${a.safetyImpact}</div></div>
+      <div class="statcard flex1" style="min-width:110px;"><span class="small muted">Exposure</span><div class="statval" style="font-size:18px;color:var(--amber);">${a.exposure}</div></div>
+    </div>
+    ${dupBlock}
+    <div style="margin-top:16px;">
+      <p class="small bold muted" style="margin-bottom:8px;">Why this priority?</p>
+      <div class="col gap-6">${a.reasoning.map(r=>`<div class="row gap-8 small" style="align-items:flex-start;"><span style="color:var(--accent);margin-top:2px;">${icon('chevronRight',13)}</span><span>${r}</span></div>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
+function driveAIAnalysis(){
+  const r = state.report;
+  if(!r || !r.analyzing || r.analysisTimerActive) return;
+  const totalSteps = 4;
+  r.analysisTimerActive=true;
+  const tick = ()=>{
+    r.thinkStep++;
+    if(r.thinkStep>=totalSteps){
+      r.analysis = runAIAnalysis(r);
+      r.analyzing = false;
+      r.analysisTimerActive=false;
+      render();
+    } else {
+      render();
+      setTimeout(tick, 550);
+    }
+  };
+  setTimeout(tick, 550);
+}
+
+/* ---------------- SECTION 07 — PROBLEM DETAIL + CONTRIBUTION ---------------- */
+function renderProblemDetail(){
+  const p = findProblem(state.activeProblemId);
+  if(!p) return emptyState('warn','Problem not found','This problem may have been removed.');
+  const loc = locById(p.locationId);
+  const cat = catInfo(p.category);
+  const pct = Math.round((p.contributorCount/p.contributorTarget)*100);
+  return `<div class="container" style="padding-top:18px;max-width:640px;">
+    <button class="btn btn-icon" style="margin-bottom:14px;" data-action="go-back">${icon('arrowLeft',18)}</button>
+    <div class="image-tile" style="height:200px;margin-bottom:18px;">${p.image}</div>
+    <div class="row between" style="margin-bottom:10px;">
+      <div class="row gap-8">${icon(cat.icon,15,'var(--text-mid)')}<span class="small bold muted" style="text-transform:uppercase;letter-spacing:0.03em;">${cat.label}</span></div>
+      ${statusBadge(p.status)}
+    </div>
+    <h1 style="font-size:22px;margin-bottom:8px;">${p.title}</h1>
+    <div class="row gap-8 muted small" style="margin-bottom:18px;">${icon('pin',14)} ${loc?loc.label:''} <span class="mono tiny faint">${p.id}</span></div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="row gap-16">
+        ${priorityRing(p.priorityScore,72)}
+        <div class="col gap-8 flex1">
+          ${severityBadge(p.severityLabel)}
+          <div class="row gap-14 small muted wrap">
+            <span>${p.reportCount} reports</span><span>${p.unresolvedDays} days unresolved</span>
+          </div>
+          <div>${suitabilityBadge(p.communitySuitability)}</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:8px;">Why it matters</h3>
+    <p class="small muted" style="line-height:1.6;margin-bottom:20px;">${p.description}</p>
+
+    <div class="panel" style="padding:18px;margin-bottom:22px;">
+      <div class="row between" style="margin-bottom:14px;">
+        <h3 style="font-size:15px;">Community response</h3>
+        <span class="small bold" style="color:var(--accent)">${p.contributorCount} / ${p.contributorTarget} contributions</span>
+      </div>
+      <div style="height:8px;border-radius:8px;background:var(--surface-3);overflow:hidden;margin-bottom:16px;">
+        <div style="height:100%;width:${Math.min(100,pct)}%;background:var(--accent);border-radius:8px;transition:width .4s ease;"></div>
+      </div>
+      <div class="col gap-10" style="margin-bottom:16px;">
+        ${(p.contributors||[]).map(c=>`<div class="row between">
+          <div class="row gap-10"><div class="avatar" style="width:34px;height:34px;font-size:12px;">${icon('users',15,'var(--text-mid)')}</div><span class="small bold">${c.name}</span></div>
+          <span class="small muted">${c.count} contributor${c.count===1?'':'s'}</span>
+        </div>`).join('') || `<p class="small muted">No contributors yet — be the first.</p>`}
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" data-action="open-join-modal">${icon('hands',18)} Join this action</button>
+    </div>
+
+    <div class="col center gap-6" style="margin-bottom:6px;">
+      <div class="row gap-10 tiny bold faint" style="text-transform:uppercase;letter-spacing:0.05em;">
+        <span>PROBLEM</span>${icon('chevronRight',12)}<span>PEOPLE</span>${icon('chevronRight',12)}<span>ACTION</span>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:20px 0 10px;">Status history</h3>
+    ${statusStepper(p.status)}
+    <div class="col gap-10" style="margin-top:20px;">
+      ${[...p.history].reverse().map(h=>`<div class="row gap-12" style="align-items:flex-start;">
+        <div class="icon-box" style="width:30px;height:30px;flex-shrink:0;">${icon('check',13,'var(--green)')}</div>
+        <div class="col gap-2">
+          <div class="row gap-8"><span class="small bold">${STATUS_LABELS[h.status]}</span><span class="tiny faint">${fmtDate(h.timestamp)}</span></div>
+          <span class="small muted">${h.note} &middot; ${h.changedBy}</span>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function joinModal(){
+  const p = findProblem(state.activeProblemId);
+  const choice = state.contributeChoice || 'individual';
+  return `
+  <div class="row between" style="margin-bottom:18px;"><h3 style="font-size:17px;">Join this action</h3><button class="btn btn-icon" data-close-modal="1">${icon('close',18)}</button></div>
+  <p class="small muted" style="margin-bottom:18px;">${p.title}</p>
+  <div class="row gap-8" style="margin-bottom:18px;">
+    <button class="btn btn-secondary flex1" style="${choice==='individual'?'border-color:var(--accent);background:var(--accent-wash);':''}" data-set-contribute="individual">${icon('users',16)} As myself</button>
+    <button class="btn btn-secondary flex1" style="${choice==='club'?'border-color:var(--accent);background:var(--accent-wash);':''}" data-set-contribute="club">${icon('trophy',16)} As a club</button>
+  </div>
+  ${choice==='club' ? `
+    <label class="field-label">Choose club</label>
+    <select class="input" id="club-select" style="margin-bottom:18px;">${CLUBS.map(c=>`<option>${c}</option>`).join('')}</select>
+    <label class="field-label">Number of members joining</label>
+    <input class="input" id="club-count" type="number" min="1" value="3" style="margin-bottom:22px;">
+  ` : `<p class="small muted" style="margin-bottom:22px;">You'll be added as an individual contributor to this problem.</p>`}
+  <button class="btn btn-primary btn-block btn-lg" data-action="confirm-join">${icon('check',18)} Confirm contribution</button>`;
+}
+
+/* ---------------- SECTION 08 — ADMIN DASHBOARD ---------------- */
+function adminHeader(title, sub){
+  return `<div class="row between" style="margin-bottom:26px;flex-wrap:wrap;gap:12px;">
+    <div><h1 style="font-size:24px;margin-bottom:4px;">${title}</h1>${sub?`<p class="muted small">${sub}</p>`:''}</div>
+    <div class="avatar" style="width:38px;height:38px;">${(state.userName||'R').charAt(0)}</div>
+  </div>`;
+}
+
+function renderAdminDashboard(){
+  const active = PROBLEMS.filter(isActive);
+  const high = active.filter(p=>p.severityLabel==='HIGH'||p.severityLabel==='CRITICAL');
+  const inProgress = PROBLEMS.filter(p=>p.status==='IN_PROGRESS');
+  const resolved = PROBLEMS.filter(p=>!isActive(p));
+  const contributors = PROBLEMS.reduce((s,p)=>s+p.contributorCount,0);
+  const queue = [...active].sort((a,b)=>b.priorityScore-a.priorityScore).slice(0,6);
+  return `
+  ${adminHeader('Operations dashboard','Live view across MUJ, GHS and the connecting corridor')}
+  <div class="row gap-14 wrap" style="margin-bottom:26px;">
+    ${[
+      {l:'Active problems',v:active.length,c:'var(--text-hi)',i:'layers'},
+      {l:'High priority',v:high.length,c:'var(--red)',i:'warn'},
+      {l:'In progress',v:inProgress.length,c:'var(--amber)',i:'clock'},
+      {l:'Resolved',v:resolved.length,c:'var(--green)',i:'check'},
+      {l:'Contributors',v:contributors,c:'var(--accent)',i:'users'},
+    ].map(s=>`<div class="statcard flex1" style="min-width:140px;"><div class="row between" style="margin-bottom:8px;"><span class="small muted">${s.l}</span><span style="color:${s.c}">${icon(s.i,15)}</span></div><div class="statval" style="color:${s.c}">${s.v}</div></div>`).join('')}
+  </div>
+
+  <div class="row gap-20 wrap" style="align-items:flex-start;">
+    <div class="card flex1" style="min-width:320px;padding:0;overflow:hidden;">
+      <div class="row between" style="padding:16px 18px 0;"><h3 style="font-size:15px;">Campus map</h3><button class="btn btn-ghost btn-sm" data-admin-tab-set="map">Open ${icon('arrowRight',13)}</button></div>
+      <div style="padding:14px 18px 18px;">${corridorMap({height:360,pins:LOCATIONS})}</div>
+    </div>
+    <div class="card flex1" style="min-width:320px;">
+      <h3 style="font-size:15px;margin-bottom:14px;">Priority queue</h3>
+      <div class="col gap-10">
+        ${queue.map(p=>`<div class="row gap-12 clickable" data-open-admin-problem="${p.id}" style="padding:8px 6px;border-radius:10px;">
+          ${priorityRing(p.priorityScore,42,false)}
+          <div class="col flex1" style="min-width:0;gap:2px;">
+            <span class="small bold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${p.title}</span>
+            <span class="tiny faint">${locById(p.locationId)?.label}</span>
+          </div>
+          ${statusBadge(p.status)}
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- ADMIN PROBLEMS LIST ---------------- */
+function renderAdminProblems(){
+  const f = state.feedFilters;
+  const list = filteredProblems();
+  return `
+  ${adminHeader('Problems','Manage, verify and resolve reported issues')}
+  <div class="row gap-8 scrollx" style="margin-bottom:14px;">
+    <button class="chip ${f.status==='all'?'active':''}" data-filter-status="all">All</button>
+    <button class="chip ${f.status==='active'?'active':''}" data-filter-status="active">Active</button>
+    <button class="chip ${f.status==='resolved'?'active':''}" data-filter-status="resolved">Resolved</button>
+  </div>
+  <div class="row gap-8 scrollx" style="margin-bottom:18px;">
+    <button class="chip ${f.category==='all'?'active':''}" data-filter-category="all">All categories</button>
+    ${CATEGORIES.map(c=>`<button class="chip ${f.category===c.id?'active':''}" data-filter-category="${c.id}">${c.label}</button>`).join('')}
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto;">
+    <table class="datatable">
+      <thead><tr><th>Problem</th><th>Category</th><th>Priority</th><th>Status</th><th>Reports</th><th>Contributors</th></tr></thead>
+      <tbody>
+        ${list.map(p=>`<tr class="rowhover" data-open-admin-problem="${p.id}">
+          <td><div class="row gap-10"><span class="mono tiny faint">${p.id}</span><span class="bold" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.title}</span></div></td>
+          <td>${catInfo(p.category).label}</td>
+          <td><div class="row gap-8">${priorityRing(p.priorityScore,34,false)}<span class="mono small bold" style="color:${priorityColorVar(p.priorityScore)}">${p.priorityScore}</span></div></td>
+          <td>${statusBadge(p.status)}</td>
+          <td>${p.reportCount}</td>
+          <td>${p.contributorCount}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ---------------- ADMIN PROBLEM DETAIL / RESOLUTION ---------------- */
+function renderAdminProblemDetail(){
+  const p = findProblem(state.activeProblemId);
+  if(!p) return emptyState('warn','Problem not found','Pick a problem from the queue.');
+  const loc = locById(p.locationId);
+  const cat = catInfo(p.category);
+  const canVerify = p.status==='REPORTED';
+  const canAssign = p.status==='VERIFIED';
+  const canProgress = p.status==='ASSIGNED';
+  const canRequestEvidence = p.status==='IN_PROGRESS';
+  const canResolve = p.status==='RESOLVED';
+  return `
+  <button class="btn btn-ghost btn-sm row gap-6" style="margin-bottom:16px;" data-admin-tab-set="problems">${icon('arrowLeft',16)} Back to problems</button>
+  <div class="row gap-24 wrap" style="align-items:flex-start;">
+    <div class="flex1 col gap-20" style="min-width:340px;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="image-tile" style="height:220px;">${p.image}</div>
+        <div style="padding:20px;">
+          <div class="row between" style="margin-bottom:10px;">
+            <span class="mono tiny faint">${p.id}</span>
+            ${statusBadge(p.status)}
+          </div>
+          <h1 style="font-size:21px;margin-bottom:8px;">${p.title}</h1>
+          <div class="row gap-8 muted small" style="margin-bottom:14px;">${icon('pin',14)} ${loc?loc.label:''}</div>
+          <p class="small muted" style="line-height:1.6;">${p.description}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px;margin-bottom:16px;">Status lifecycle</h3>
+        ${statusStepper(p.status)}
+      </div>
+
+      ${p.status==='RESOLVED'||p.status==='CONFIRMED' ? renderResolutionPanel(p) : ''}
+
+      <div class="card">
+        <h3 style="font-size:15px;margin-bottom:14px;">History</h3>
+        <div class="col gap-10">
+          ${[...p.history].reverse().map(h=>`<div class="row gap-12" style="align-items:flex-start;">
+            <div class="icon-box" style="width:28px;height:28px;flex-shrink:0;">${icon('check',12,'var(--green)')}</div>
+            <div class="col gap-2"><div class="row gap-8"><span class="small bold">${STATUS_LABELS[h.status]}</span><span class="tiny faint">${fmtDate(h.timestamp)}</span></div><span class="small muted">${h.note} &middot; ${h.changedBy}</span></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="col gap-16" style="width:300px;flex-shrink:0;">
+      <div class="card col center" style="padding:22px;">
+        ${priorityRing(p.priorityScore,88)}
+        <div style="margin-top:12px;">${severityBadge(p.severityLabel)}</div>
+      </div>
+      <div class="card col gap-12">
+        <div class="row between small"><span class="muted">Category</span><span class="bold">${cat.label}</span></div>
+        <div class="row between small"><span class="muted">Safety impact</span><span class="bold" style="color:var(--red)">${p.safetyImpact}</span></div>
+        <div class="row between small"><span class="muted">Duplicate probability</span><span class="bold">${p.duplicateProbability||0}%</span></div>
+        <div class="row between small"><span class="muted">Reports</span><span class="bold">${p.reportCount}</span></div>
+        <div class="row between small"><span class="muted">Contributors</span><span class="bold">${p.contributorCount}</span></div>
+        <div class="row between small"><span class="muted">Assigned to</span><span class="bold" style="text-align:right;">${p.assignedTo||'Unassigned'}</span></div>
+        <div class="row between small"><span class="muted">Suitability</span>${suitabilityBadge(p.communitySuitability)}</div>
+      </div>
+      <div class="card col gap-10">
+        <h3 style="font-size:14px;margin-bottom:2px;">Actions</h3>
+        ${canVerify?`<button class="btn btn-secondary btn-block" data-admin-action="verify">${icon('check',15)} Verify</button>`:''}
+        ${canAssign?`<button class="btn btn-secondary btn-block" data-admin-action="assign">${icon('flag',15)} Assign</button>`:''}
+        ${canProgress?`<button class="btn btn-secondary btn-block" data-admin-action="progress">${icon('clock',15)} Mark in progress</button>`:''}
+        ${canRequestEvidence?`<button class="btn btn-primary btn-block" data-action="open-evidence-modal">${icon('camera',15)} Upload resolution evidence</button>`:''}
+        ${canResolve?`<button class="btn btn-primary btn-block" data-admin-action="confirm">${icon('check',15)} Confirm resolved</button>`:''}
+        ${p.status==='CONFIRMED'?`<p class="small muted" style="text-align:center;">${icon('check',14,'var(--green)')} Closed and recorded</p>`:''}
+        <button class="btn btn-ghost btn-block btn-sm" data-admin-action="request-evidence-note">${icon('image',14)} Request more evidence</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderResolutionPanel(p){
+  return `<div class="card">
+    <div class="row between" style="margin-bottom:14px;"><h3 style="font-size:15px;">✓ Resolution evidence</h3>${p.status==='CONFIRMED'?`<span class="badge badge-green">Confirmed</span>`:`<span class="badge badge-amber">Awaiting confirmation</span>`}</div>
+    ${beforeAfterViewer(p.image, p.afterImage||categoryArt(p.category,'after'), 'resadmin')}
+    <div class="row gap-16 wrap" style="margin-top:16px;">
+      <div class="col gap-4 flex1"><span class="tiny faint">Resolved by</span><span class="small bold">${p.resolvedBy||p.assignedTo||'—'}</span></div>
+      <div class="col gap-4 flex1"><span class="tiny faint">Resolution time</span><span class="small bold">${p.unresolvedDaysAtResolution||p.unresolvedDays} days</span></div>
+    </div>
+    <div class="panel" style="padding:12px 14px;margin-top:14px;">
+      <div class="row gap-8" style="color:var(--cyan);margin-bottom:6px;">${icon('sparkle',15)}<span class="small bold">Resolution evidence review</span></div>
+      <p class="small muted">"Visual resolution appears successful — surface condition and lighting differ significantly from the reported state." Confidence is estimated, not guaranteed.</p>
+    </div>
+    ${p.resolutionNote?`<p class="small muted" style="margin-top:12px;">${p.resolutionNote}</p>`:''}
+  </div>`;
+}
+
+function beforeAfterViewer(beforeSvg, afterSvg, tag){
+  return `<div class="ba-wrap" style="height:220px;" id="ba-${tag}">
+    <div style="position:absolute;inset:0;">${afterSvg}</div>
+    <div style="position:absolute;inset:0;overflow:hidden;width:50%;" id="ba-before-${tag}">${beforeSvg}</div>
+    <div class="ba-slider" id="ba-slider-${tag}" style="left:50%;" data-ba-tag="${tag}"><div class="ba-slider-handle">${icon('chevronLeft',12,'#111')}${icon('chevronRight',12,'#111')}</div></div>
+    <span class="ba-tag" style="left:12px;color:#fff;">Before</span>
+    <span class="ba-tag" style="right:12px;color:#fff;">After</span>
+  </div>`;
+}
+
+function evidenceModal(){
+  const p = findProblem(state.activeProblemId);
+  return `
+  <div class="row between" style="margin-bottom:16px;"><h3 style="font-size:17px;">Upload resolution evidence</h3><button class="btn btn-icon" data-close-modal="1">${icon('close',18)}</button></div>
+  <p class="small muted" style="margin-bottom:16px;">${p.title}</p>
+  <label class="field-label">After photo</label>
+  <label class="card clickable col center gap-8" style="border-style:dashed;padding:26px;margin-bottom:16px;">
+    <input type="file" accept="image/*" id="after-image-input">
+    ${icon('upload',22,'var(--text-lo)')}<span class="small muted">Tap to upload the after photo</span>
+  </label>
+  <label class="field-label">Resolution notes</label>
+  <textarea class="textarea" id="resolution-note" placeholder="What was done to resolve this?" style="margin-bottom:20px;min-height:80px;"></textarea>
+  <button class="btn btn-primary btn-block btn-lg" data-action="submit-evidence">${icon('check',17)} Mark resolved</button>`;
+}
+
+/* ---------------- ADMIN MAP ---------------- */
+function renderAdminMap(){
+  const active = PROBLEMS.filter(isActive);
+  return `${adminHeader('Campus map','All active problems across MUJ, GHS and the corridor')}
+  <div class="row gap-20 wrap" style="align-items:flex-start;">
+    <div class="card flex1" style="min-width:340px;padding:14px;">${corridorMap({height:560,pins:active.map(p=>({...locById(p.locationId),id:p.id})),problemIds:active.map(p=>p.id)})}</div>
+    <div class="col gap-10" style="width:320px;flex-shrink:0;max-height:420px;overflow-y:auto;">
+      ${active.map(p=>`<div class="card clickable" data-open-admin-problem="${p.id}" style="padding:12px;"><div class="row gap-10"><span style="color:${priorityColorVar(p.priorityScore)}" class="mono bold">${p.priorityScore}</span><span class="small bold flex1" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.title}</span></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------------- ADMIN COMMUNITY ---------------- */
+function renderAdminCommunity(){
+  const clubTotals = {};
+  PROBLEMS.forEach(p=>(p.contributors||[]).forEach(c=>{ clubTotals[c.name]=(clubTotals[c.name]||0)+c.count; }));
+  const sorted = Object.entries(clubTotals).sort((a,b)=>b[1]-a[1]);
+  return `${adminHeader('Community','Clubs and volunteers active across all problems')}
+  <div class="card" style="padding:0;overflow-x:auto;">
+    <table class="datatable">
+      <thead><tr><th>Club / group</th><th>Total contributors</th><th>Problems supported</th></tr></thead>
+      <tbody>
+        ${sorted.map(([name,count])=>{
+          const supported = PROBLEMS.filter(p=>(p.contributors||[]).some(c=>c.name===name)).length;
+          return `<tr><td class="row gap-10"><div class="icon-box" style="width:32px;height:32px;">${icon('trophy',15,'var(--accent)')}</div><span class="bold">${name}</span></td><td>${count}</td><td>${supported}</td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ---------------- ADMIN ANALYTICS ---------------- */
+function renderAdminAnalytics(){
+  const byCat = {};
+  CATEGORIES.forEach(c=>byCat[c.id]=0);
+  PROBLEMS.forEach(p=>byCat[p.category]++);
+  const max = Math.max(...Object.values(byCat),1);
+  const avgResolutionDays = (()=>{
+    const resolved = PROBLEMS.filter(p=>p.status==='CONFIRMED');
+    if(!resolved.length) return 0;
+    return Math.round(resolved.reduce((s,p)=>s+(p.unresolvedDaysAtResolution||0),0)/resolved.length);
+  })();
+  const resolutionRate = Math.round((PROBLEMS.filter(p=>!isActive(p)).length/PROBLEMS.length)*100);
+  return `${adminHeader('Analytics','Category load and resolution performance')}
+  <div class="row gap-14 wrap" style="margin-bottom:22px;">
+    <div class="statcard flex1" style="min-width:160px;"><span class="small muted">Avg. resolution time</span><div class="statval" style="color:var(--cyan);">${avgResolutionDays}d</div></div>
+    <div class="statcard flex1" style="min-width:160px;"><span class="small muted">Resolution rate</span><div class="statval" style="color:var(--green);">${resolutionRate}%</div></div>
+    <div class="statcard flex1" style="min-width:160px;"><span class="small muted">Total reports filed</span><div class="statval">${PROBLEMS.reduce((s,p)=>s+p.reportCount,0)}</div></div>
+  </div>
+  <div class="card">
+    <h3 style="font-size:15px;margin-bottom:18px;">Problems by category</h3>
+    <div class="col gap-12">
+      ${CATEGORIES.map(c=>`<div class="row gap-12">
+        <span class="small" style="width:170px;flex-shrink:0;">${c.label}</span>
+        <div class="flex1" style="height:10px;border-radius:6px;background:var(--surface-3);overflow:hidden;"><div style="height:100%;width:${(byCat[c.id]/max)*100}%;background:var(--accent);border-radius:6px;"></div></div>
+        <span class="small bold mono" style="width:20px;text-align:right;">${byCat[c.id]}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------------- SECTION 10 — IMPACT + HISTORY ---------------- */
+function renderAdminHistory(){
+  const resolved = PROBLEMS.filter(p=>p.status==='CONFIRMED'||p.status==='RESOLVED');
+  const clubsCount = new Set(PROBLEMS.flatMap(p=>(p.contributors||[]).map(c=>c.name))).size;
+  const contributors = PROBLEMS.reduce((s,p)=>s+p.contributorCount,0);
+  const active = PROBLEMS.filter(isActive).length;
+  const rate = Math.round((resolved.length/PROBLEMS.length)*100);
+  return `${adminHeader('Impact and history','Resolution history — evidence photos remain temporary')}
+  <div class="row gap-14 wrap" style="margin-bottom:26px;">
+    ${[
+      {l:'Problems resolved',v:resolved.length,c:'var(--green)'},
+      {l:'Contributors',v:contributors,c:'var(--accent)'},
+      {l:'Clubs participating',v:clubsCount,c:'var(--cyan)'},
+      {l:'Active problems',v:active,c:'var(--amber)'},
+      {l:'Resolution rate',v:rate+'%',c:'var(--text-hi)'},
+    ].map(s=>`<div class="statcard flex1" style="min-width:140px;"><span class="small muted">${s.l}</span><div class="statval" style="color:${s.c}">${s.v}</div></div>`).join('')}
+  </div>
+  <h3 style="font-size:16px;margin-bottom:14px;">Recently resolved</h3>
+  <div class="col gap-14">
+    ${resolved.map(p=>`<div class="card">
+      <div class="row between wrap" style="gap:14px;margin-bottom:14px;">
+        <div class="row gap-12"><span class="mono tiny faint">${p.id}</span><span class="bold">${p.title}</span></div>
+        ${statusBadge(p.status)}
+      </div>
+      ${beforeAfterViewer(p.image, p.afterImage||categoryArt(p.category,'after'), 'hist-'+p.id)}
+      <div class="row gap-20 wrap" style="margin-top:14px;">
+        <div class="col gap-2"><span class="tiny faint">Location</span><span class="small bold">${locById(p.locationId)?.label}</span></div>
+        <div class="col gap-2"><span class="tiny faint">Reported</span><span class="small bold">${fmtDateShort(p.createdAt)}</span></div>
+        <div class="col gap-2"><span class="tiny faint">Resolved</span><span class="small bold">${fmtDateShort(p.updatedAt)}</span></div>
+        <div class="col gap-2"><span class="tiny faint">Reported by</span><span class="small bold">${p.reportedBy}</span></div>
+        <div class="col gap-2"><span class="tiny faint">Resolved by</span><span class="small bold">${p.resolvedBy||'—'}</span></div>
+        <div class="col gap-2"><span class="tiny faint">Contributors</span><span class="small bold">${p.contributorCount}</span></div>
+      </div>
+    </div>`).join('') || emptyState('history','No resolved problems yet','Once problems are confirmed resolved, their outcomes appear here permanently.')}
+  </div>`;
+}
+
+/* ---------------- EVENT WIRING ---------------- */
+function readFileAsDataUrl(file, cb){
+  const reader = new FileReader();
+  reader.onload = ()=>cb(reader.result);
+  reader.onerror = ()=>toast('Could not read that image file','error');
+  reader.readAsDataURL(file);
+}
+
+function initBeforeAfterSliders(){
+  document.querySelectorAll('[id^="ba-slider-"]').forEach(handle=>{
+    if(handle.dataset.bound==='1') return;
+    handle.dataset.bound='1';
+    const tag = handle.getAttribute('data-ba-tag');
+    const wrap = document.getElementById('ba-'+tag);
+    const beforeLayer = document.getElementById('ba-before-'+tag);
+    if(!wrap || !beforeLayer) return;
+    let dragging=false;
+    const setPct = (clientX)=>{
+      const rect = wrap.getBoundingClientRect();
+      let pct = ((clientX-rect.left)/rect.width)*100;
+      pct = Math.max(0,Math.min(100,pct));
+      beforeLayer.style.width = pct+'%';
+      handle.style.left = pct+'%';
+    };
+    handle.addEventListener('mousedown', e=>{dragging=true; e.preventDefault();});
+    window.addEventListener('mousemove', e=>{ if(dragging) setPct(e.clientX); });
+    window.addEventListener('mouseup', ()=>dragging=false);
+    handle.addEventListener('touchstart', ()=>dragging=true, {passive:true});
+    wrap.addEventListener('touchmove', e=>{ if(dragging && e.touches[0]) setPct(e.touches[0].clientX); }, {passive:true});
+    window.addEventListener('touchend', ()=>dragging=false);
+  });
+}
+
+function attachHandlers(){
+  const app = document.getElementById('app');
+
+  app.querySelectorAll('[data-nav]').forEach(el=>el.addEventListener('click', ()=>{
+    const hint = el.getAttribute('data-role-hint');
+    if(hint) state.roleHint = hint;
+    if(el.hasAttribute('data-student-tab-set')) state.studentTab = el.getAttribute('data-student-tab-set');
+    if(el.hasAttribute('data-set-feed-mode')) state.feedFilters.mode = el.getAttribute('data-set-feed-mode');
+    navigate(el.getAttribute('data-nav'));
+  }));
+
+  app.querySelectorAll('[data-set-role-hint]').forEach(el=>el.addEventListener('click', ()=>{
+    state.roleHint = el.getAttribute('data-set-role-hint'); render();
+  }));
+
+  app.querySelectorAll('[data-open-problem]').forEach(el=>el.addEventListener('click', ()=>{
+    navigate('problem-detail', {activeProblemId: el.getAttribute('data-open-problem')});
+  }));
+  app.querySelectorAll('[data-open-admin-problem]').forEach(el=>el.addEventListener('click', ()=>{
+    navigate('admin-problem-detail', {activeProblemId: el.getAttribute('data-open-admin-problem')});
+  }));
+
+  app.querySelectorAll('[data-student-tab]').forEach(el=>el.addEventListener('click', ()=>{
+    const tab = el.getAttribute('data-student-tab');
+    state.studentTab = tab;
+    const map = {home:'student-home', explore:'feed', contribute:'feed', activity:'my-activity'};
+    if(tab==='contribute') state.feedFilters = {...state.feedFilters, status:'active'};
+    navigate(map[tab]);
+  }));
+
+  app.querySelectorAll('[data-admin-tab]').forEach(el=>el.addEventListener('click', ()=>{
+    const tab = el.getAttribute('data-admin-tab');
+    state.adminTab = tab;
+    navigate('admin-'+tab);
+  }));
+  app.querySelectorAll('[data-admin-tab-set]').forEach(el=>el.addEventListener('click', ()=>{
+    const tab = el.getAttribute('data-admin-tab-set');
+    state.adminTab = tab;
+    navigate('admin-'+tab);
+  }));
+
+  const backBtn = app.querySelector('[data-action="go-back"]');
+  if(backBtn) backBtn.addEventListener('click', goBack);
+
+  app.querySelectorAll('[data-close-modal]').forEach(el=>el.addEventListener('click', ()=>{ state.modal=null; render(); }));
+
+  app.querySelectorAll('[data-filter-category]').forEach(el=>el.addEventListener('click', ()=>{
+    state.feedFilters.category = el.getAttribute('data-filter-category'); render();
+  }));
+  app.querySelectorAll('[data-filter-status]').forEach(el=>el.addEventListener('click', ()=>{
+    state.feedFilters.status = el.getAttribute('data-filter-status'); render();
+  }));
+  app.querySelectorAll('[data-set-feed-mode]').forEach(el=>{ if(!el.hasAttribute('data-nav')) el.addEventListener('click', ()=>{ state.feedFilters.mode = el.getAttribute('data-set-feed-mode'); render(); }); });
+  const sortSel = app.querySelector('[data-sort-select]');
+  if(sortSel) sortSel.addEventListener('change', ()=>{ state.feedFilters.sort = sortSel.value; render(); });
+
+  /* ---- login ---- */
+  const loginStudent = app.querySelector('[data-action="login-student"]');
+  if(loginStudent) loginStudent.addEventListener('click', ()=>{
+    const nameEl = document.getElementById('login-name');
+    const idEl=document.getElementById('login-student-id');
+    const studentId=(idEl&&idEl.value.trim())||'MUJ-DEMO';
+    state.role='student'; state.userName = (nameEl && nameEl.value.trim()) || 'Ananya Rao'; state.userId=makeUserId(state.userName+'-'+studentId);
+    state.studentTab='home';
+    toast('Signed in as student demo','success');
+    navigate('student-home');
+  });
+  const loginAdmin = app.querySelector('[data-action="login-admin"]');
+  if(loginAdmin) loginAdmin.addEventListener('click', ()=>{
+    const nameEl = document.getElementById('login-name-admin');
+    state.role='admin'; state.userName = (nameEl && nameEl.value.trim()) || 'R. Mehta'; state.userId=makeUserId(state.userName);
+    state.adminTab='dashboard';
+    toast('Signed in as admin demo','success');
+    navigate('admin-dashboard');
+  });
+  const logoutBtn = app.querySelector('[data-action="logout"]');
+  if(logoutBtn) logoutBtn.addEventListener('click', ()=>{
+    state.role=null; state.userName=null; state.userId=null; state.history=[];
+    navigate('landing');
+  });
+
+  /* ---- report flow ---- */
+  const startReport = app.querySelector('[data-action="start-report"]');
+  if(startReport) startReport.addEventListener('click', ()=>{ resetReportDraft(); navigate('report-flow'); });
+
+  const reportBack = app.querySelector('[data-action="report-back"]');
+  if(reportBack) reportBack.addEventListener('click', ()=>{
+    if(state.report.step>1){ state.report.step--; render(); } else { goBack(); }
+  });
+  const reportNext = app.querySelector('[data-action="report-next"]');
+  if(reportNext) reportNext.addEventListener('click', ()=>{
+    if(state.report.step===3){
+      const desc = document.getElementById('desc-input');
+      if(desc) state.report.description = desc.value;
+    }
+    state.report.step++; render();
+  });
+  app.querySelectorAll('[data-select-location]').forEach(el=>el.addEventListener('click', ()=>{
+    state.report.locationId = el.getAttribute('data-select-location'); render();
+  }));
+  app.querySelectorAll('[data-map-pin]').forEach(el=>el.addEventListener('click', ()=>{
+    if(state.view==='report-flow'){ state.report.locationId = el.getAttribute('data-map-pin'); render(); }
+  }));
+  const useCurrentLoc = app.querySelector('[data-action="use-current-location"]');
+  if(useCurrentLoc) useCurrentLoc.addEventListener('click', ()=>{
+    if(!navigator.geolocation){ toast('Location services are not available in this browser','error'); return; }
+    useCurrentLoc.disabled=true;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const loc=nearestLocationFromCoords(pos.coords.latitude,pos.coords.longitude);
+      if(!loc){ toast('Could not match your location to the mapped corridor','error'); useCurrentLoc.disabled=false; return; }
+      state.report.locationId=loc.id;
+      toast(`Location detected: ${loc.label}`,'success');
+      render();
+    }, ()=>{
+      useCurrentLoc.disabled=false;
+      toast('Location permission was denied or unavailable. Choose a mapped location instead.','error');
+    }, {enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+  });
+  app.querySelectorAll('[data-select-category]').forEach(el=>el.addEventListener('click', ()=>{
+    state.report.category = el.getAttribute('data-select-category'); render();
+  }));
+  const imageInput = document.getElementById('image-input');
+  if(imageInput) imageInput.addEventListener('change', e=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(!file.type.startsWith('image/')){ toast('Please choose an image file','error'); e.target.value=''; return; }
+    if(file.size>5*1024*1024){ toast('Please keep images under 5 MB','error'); e.target.value=''; return; }
+    readFileAsDataUrl(file, url=>{ state.report.imageData=url; render(); });
+  });
+  const clearImage = app.querySelector('[data-action="clear-image"]');
+  if(clearImage) clearImage.addEventListener('click', ()=>{ state.report.imageData=null; render(); });
+  const descInput = document.getElementById('desc-input');
+  if(descInput) descInput.addEventListener('input', ()=>{ state.report.description = descInput.value;
+    const btn = app.querySelector('[data-action="report-next"]');
+    if(btn) btn.disabled = state.report.description.trim().length<=4;
+  });
+
+  const submitReport = app.querySelector('[data-action="submit-report"]');
+  if(submitReport) submitReport.addEventListener('click', ()=>{
+    if(!state.report.title){
+      const cat = catInfo(state.report.category);
+      state.report.title = `${cat.label} issue near ${locById(state.report.locationId)?.label||'campus'}`;
+    }
+    navigate('ai-analysis');
+  });
+
+  const supportExisting = app.querySelector('[data-action="support-existing"]');
+  if(supportExisting) supportExisting.addEventListener('click', ()=>{
+    const dup = state.report.analysis.duplicateOf;
+    if(dup){ dup.reportCount++; dup.updatedAt=new Date(); dup.participantIds=dup.participantIds||[]; if(state.userId && !dup.participantIds.includes(state.userId)) dup.participantIds.push(state.userId); saveData(); }
+    toast(`Added your report to ${dup?dup.id:'existing problem'} — thanks for confirming it`,'success');
+    navigate('problem-detail', {activeProblemId: dup?dup.id:null});
+  });
+  const createNewAnyway = app.querySelector('[data-action="create-new-anyway"]');
+  const createNewProblem = app.querySelector('[data-action="create-new-problem"]');
+  [createNewAnyway, createNewProblem].forEach(btn=>{ if(!btn) return; btn.addEventListener('click', ()=>{
+    const a = state.report.analysis;
+    const newP = {
+      id: uid('P'), title: a.problemTitle, category: state.report.category,
+      description: state.report.description, locationId: state.report.locationId,
+      image: state.report.imageData ? `<img src="${state.report.imageData}" style="width:100%;height:100%;object-fit:cover;">` : categoryArt(state.report.category,'before'),
+      severity:a.severityScore, urgency:a.urgency, safetyImpact:a.safetyImpact, exposure:a.exposure,
+      communitySuitability:a.communitySuitability, duplicateProbability:a.duplicateProbability,
+      reportCount:1, contributorTarget:6, contributorCount:0,
+      status:'REPORTED', createdAt:new Date(), updatedAt:new Date(),
+      reportedBy: state.userName||'You', reportedById: state.userId||makeUserId(state.userName||'You'), assignedTo:null, contributors:[], participantIds:[],
+      history:[{status:'REPORTED',changedBy:state.userName||'You',timestamp:new Date(),note:'Submitted via assisted report assessment.'}],
+      priorityScore:a.priorityScore, severityLabel:a.severity, unresolvedDays:0,
+    };
+    PROBLEMS.unshift(newP);
+    saveData();
+    toast('Problem created and added to the community feed','success');
+    navigate('problem-detail', {activeProblemId:newP.id});
+  });});
+
+  /* ---- contribution ---- */
+  const openJoin = app.querySelector('[data-action="open-join-modal"]');
+  if(openJoin) openJoin.addEventListener('click', ()=>{ state.contributeChoice='individual'; state.modal=joinModal; render(); });
+  app.querySelectorAll('[data-set-contribute]').forEach(el=>el.addEventListener('click', ()=>{
+    state.contributeChoice = el.getAttribute('data-set-contribute'); render();
+  }));
+  const confirmJoin = app.querySelector('[data-action="confirm-join"]');
+  if(confirmJoin) confirmJoin.addEventListener('click', ()=>{
+    const p = findProblem(state.activeProblemId);
+    if(!p || !state.userId){ toast('Please sign in before contributing','error'); return; }
+    p.participantIds=p.participantIds||[];
+    if(p.participantIds.includes(state.userId)){ toast('You have already joined this problem','error'); state.modal=null; render(); return; }
+    p.participantIds.push(state.userId);
+    if(p.contributorCount>=p.contributorTarget){ toast('This problem has already reached its contributor goal','error'); p.participantIds=p.participantIds.filter(id=>id!==state.userId); state.modal=null; render(); return; }
+    if(state.contributeChoice==='club'){
+      const sel = document.getElementById('club-select'); const cnt = document.getElementById('club-count');
+      const name = sel?sel.value:'Student Volunteers Cell';
+      const requested = Math.max(1, parseInt(cnt?cnt.value:'1')||1);
+      const count = Math.min(requested, p.contributorTarget-p.contributorCount);
+      const existing = p.contributors.find(c=>c.name===name);
+      if(existing) existing.count+=count; else p.contributors.push({name,count,type:'club'});
+      p.contributorCount += count;
+      toast(`${name} joined with ${count} member${count===1?'':'s'}`,'success');
+    } else {
+      const existing = p.contributors.find(c=>c.name==='Individual contributors');
+      if(existing) existing.count+=1; else p.contributors.push({name:'Individual contributors',count:1,type:'individual'});
+      p.contributorCount += 1;
+      toast('You joined this action','success');
+    }
+    state.modal=null; saveData(); render();
+  });
+
+  /* ---- admin actions ---- */
+  const nextStatusFor = {REPORTED:'VERIFIED', VERIFIED:'ASSIGNED', ASSIGNED:'IN_PROGRESS'};
+  const actionMeta = {
+    verify:{status:'VERIFIED', note:'Verified by site visit.', by:state.userName||'Admin'},
+    assign:{status:'ASSIGNED', note:'Assigned to maintenance team.', by:state.userName||'Admin'},
+    progress:{status:'IN_PROGRESS', note:'Work has begun on site.', by:state.userName||'Admin'},
+    confirm:{status:'CONFIRMED', note:'Visual verification passed. Closed.', by:state.userName||'Admin'},
+  };
+  app.querySelectorAll('[data-admin-action]').forEach(el=>el.addEventListener('click', ()=>{
+    if(state.role!=='admin'){ toast('Administrator access required','error'); return; }
+    const key = el.getAttribute('data-admin-action');
+    const p = findProblem(state.activeProblemId);
+    if(key==='request-evidence-note'){ toast('Requested additional evidence from reporter'); return; }
+    const meta = actionMeta[key];
+    if(!meta || !p) return;
+    const allowed={verify:['REPORTED'],assign:['VERIFIED'],progress:['ASSIGNED'],confirm:['RESOLVED']};
+    if(!(allowed[key]||[]).includes(p.status)){ toast(`This action is not valid from ${STATUS_LABELS[p.status]||p.status}`,'error'); return; }
+    p.status = meta.status; p.updatedAt = new Date();
+    p.history.push({status:meta.status, changedBy:meta.by, timestamp:new Date(), note:meta.note});
+    if(key==='assign') p.assignedTo = p.assignedTo || 'Estate Maintenance Wing';
+    toast(`Marked ${STATUS_LABELS[meta.status]}`,'success');
+    saveData(); render();
+  }));
+
+  const openEvidence = app.querySelector('[data-action="open-evidence-modal"]');
+  if(openEvidence) openEvidence.addEventListener('click', ()=>{ state.modal = evidenceModal; render(); });
+  const submitEvidence = app.querySelector('[data-action="submit-evidence"]');
+  if(submitEvidence) submitEvidence.addEventListener('click', ()=>{
+    const p = findProblem(state.activeProblemId);
+    const noteEl = document.getElementById('resolution-note');
+    const afterInput = document.getElementById('after-image-input');
+    const finalize = (afterUrl)=>{
+      p.afterImage = afterUrl ? `<img src="${afterUrl}" style="width:100%;height:100%;object-fit:cover;">` : categoryArt(p.category,'after');
+      p.resolutionNote = (noteEl&&noteEl.value.trim()) || 'Issue resolved and verified on site.';
+      p.resolvedBy = p.assignedTo || 'Maintenance Team';
+      p.status='RESOLVED'; p.updatedAt=new Date();
+      p.unresolvedDaysAtResolution = p.unresolvedDays;
+      p.history.push({status:'RESOLVED', changedBy:p.resolvedBy, timestamp:new Date(), note:'Evidence uploaded, pending confirmation.'});
+      state.modal=null;
+      saveData();
+      toast('Resolution evidence submitted','success');
+      render();
+      setTimeout(initBeforeAfterSliders, 30);
+    };
+    if(afterInput && afterInput.files[0]){
+      const file=afterInput.files[0];
+      if(!file.type.startsWith('image/') || file.size>5*1024*1024){ toast('Please upload an image under 5 MB','error'); return; }
+      readFileAsDataUrl(file, finalize);
+    } else finalize(null);
+  });
+
+  initBeforeAfterSliders();
+}
+
+/* ---------------- INIT ---------------- */
+render();
+
+</script>
+</body>
+</html>
